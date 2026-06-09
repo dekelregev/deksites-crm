@@ -100,7 +100,7 @@ export async function updateClient(id, patch) {
 
 export async function deleteClient(id) {
   const { error } = await supabase.from('clients').delete().eq('id', id)
-  if (error) throw error
+  if (error) throw error // employees hit a policy error here, by design
 }
 
 // ---------------- activity ----------------
