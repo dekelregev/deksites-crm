@@ -72,10 +72,10 @@ const STYLES = `
 /* buttons */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;
   font-size:13.5px;font-weight:600;transition:.12s}
-.btn-pri{background:var(--accent);color:#fff}
-.btn-pri:hover{background:var(--accent-2)}
-.btn-gh{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
-.btn-gh:hover{border-color:#cfcabf;background:#fbfaf7}
+.dk .btn-pri{background:var(--accent);color:#fff}
+.dk .btn-pri:hover{background:var(--accent-2)}
+.dk .btn-gh{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.dk .btn-gh:hover{border-color:#cfcabf;background:#fbfaf7}
 .btn-sm{padding:6px 11px;font-size:12.5px}
 
 /* cards */
