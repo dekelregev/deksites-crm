@@ -290,11 +290,12 @@ export default function App(){
   const [selected,setSelected]=useState(null)
   const [adding,setAdding]=useState(false)
   const [menuOpen,setMenuOpen]=useState(false)
+  const [repFilter,setRepFilter]=useState('all')
 
   const isOwner = user?.role === 'owner'
   const empMap = useMemo(()=>Object.fromEntries(employees.map(e=>[e.id,e.full_name])),[employees])
   const nameOf = id => empMap[id] ?? 'Unassigned'
-  const visibleLeads = leads
+  const visibleLeads = isOwner && repFilter !== 'all' ? leads.filter(l => l.assigned_to === repFilter) : leads
   const visibleActivity = activity
 
   const loadAll = useCallback(async()=>{
@@ -405,8 +406,8 @@ export default function App(){
           <main className="content">
             {dataError && <div className="lockbar" style={{background:'#fdecec',borderColor:'#f3c0c0',color:'#9c2a2a'}}>{dataError}</div>}
             {view==='dashboard' && <Dashboard {...{isOwner,user,visibleLeads,clients,visibleActivity,nameOf,leads}}/>}
-            {view==='leads' && <Leads {...{visibleLeads,nameOf,setSelected,isOwner}}/>}
-            {view==='pipeline' && <Pipeline {...{visibleLeads,nameOf,patchLead,setSelected}}/>}
+            {view==='leads' && <Leads {...{visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,employees}}/>}
+            {view==='pipeline' && <Pipeline {...{visibleLeads,nameOf,patchLead,setSelected,isOwner,repFilter,setRepFilter,employees}}/>}
             {view==='clients' && <Clients {...{clients,nameOf,isOwner,patchClient,removeClient}}/>}
             {view==='company' && <Company {...{leads,clients,nameOf}}/>}
             {view==='activity' && <ActivityView {...{visibleActivity,nameOf}}/>}
@@ -540,7 +541,7 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
 }
 
 // ---------- Leads table ----------
-function Leads({visibleLeads,nameOf,setSelected,isOwner}){
+function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,employees}){
   const [q,setQ] = useState('')
   const [filter,setFilter] = useState('all')
   const [sort,setSort] = useState({k:'updated',dir:'desc'})
@@ -572,6 +573,10 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner}){
     <div className="tools">
       <div className="srch"><Search size={16} className="muted"/>
         <input placeholder="Search business, contact, phone" value={q} onChange={e=>setQ(e.target.value)}/></div>
+      {isOwner && <select className="sel" value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
+        <option value="all">All reps</option>
+        {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
+      </select>}
       <select className="sel" value={filter} onChange={e=>setFilter(e.target.value)}>
         <option value="all">All statuses</option>
         {PIPE_ORDER.map(s=><option key={s} value={s}>{STATUS[s].label}</option>)}
@@ -603,8 +608,15 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner}){
 }
 
 // ---------- Pipeline / kanban ----------
-function Pipeline({visibleLeads,nameOf,patchLead,setSelected}){
-  return <div className="kb">
+function Pipeline({visibleLeads,nameOf,patchLead,setSelected,isOwner,repFilter,setRepFilter,employees}){
+  return <>
+    {isOwner && <div style={{marginBottom:14}}>
+      <select className="sel" value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
+        <option value="all">All reps</option>
+        {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
+      </select>
+    </div>}
+    <div className="kb">
     {PIPE_ORDER.map(s=>{
       const items = visibleLeads.filter(l=>l.status===s)
       return <div className="col" key={s}>
@@ -623,6 +635,7 @@ function Pipeline({visibleLeads,nameOf,patchLead,setSelected}){
       </div>
     })}
   </div>
+  </>
 }
 
 // ---------- Clients ----------
