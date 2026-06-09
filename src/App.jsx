@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, UserCog,
   BarChart3, Activity, Search, Plus, Phone, LogOut, X, Trash2,
   ChevronRight, TrendingUp, Wallet, CheckCircle2, CircleDashed,
-  Filter, ArrowUpDown, Lock, Menu, DollarSign
+  Filter, ArrowUpDown, Lock, Menu, DollarSign, Upload
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip,
@@ -14,7 +14,8 @@ import {
   signIn, getMyProfile, listEmployees, listLeads, listClients, recentActivity,
   createLead as qCreateLead, updateLead as qUpdateLead, deleteLead as qDeleteLead,
   updateClient as qUpdateClient, createEmployee as qCreateEmployee,
-  deleteClient as qDeleteClient
+  deleteClient as qDeleteClient,
+  bulkCreateLeads as qBulkCreateLeads
 } from './queries'
 
 /* DekSites CRM - production app. UI matches the demo; data and auth are live
@@ -289,6 +290,7 @@ export default function App(){
   const [dataError,setDataError]=useState('')
   const [selected,setSelected]=useState(null)
   const [adding,setAdding]=useState(false)
+  const [bulkImport,setBulkImport]=useState(false)
   const [menuOpen,setMenuOpen]=useState(false)
   const [repFilter,setRepFilter]=useState('all')
 
@@ -351,6 +353,10 @@ export default function App(){
     catch(err){ setDataError('Delete blocked: '+(err.message||err)) }
   }
   async function addEmployee(form){ await qCreateEmployee(form); await loadAll() }
+  async function bulkAddLeads(leads){
+    try{ await qBulkCreateLeads(leads); await loadAll(); setBulkImport(false) }
+    catch(err){ setDataError(err.message||String(err)) }
+  }
 
   if(booting) return <Splash/>
   if(!user) return <Login onSignIn={signIn} error={authError}/>
@@ -402,8 +408,10 @@ export default function App(){
             <button className="menu-btn" onClick={()=>setMenuOpen(!menuOpen)}><Menu size={22}/></button>
             <div><h1>{title}</h1><div className="sub">{sub}</div></div>
             <div className="sp"/>
-            {(view==='leads'||view==='pipeline'||view==='dashboard') &&
-              <button className="btn btn-pri" onClick={()=>setAdding(true)}><Plus size={16}/>Add lead</button>}
+            {(view==='leads'||view==='pipeline'||view==='dashboard') && <>
+              {isOwner && <button className="btn btn-gh" onClick={()=>setBulkImport(true)}><Upload size={16}/>Import</button>}
+              <button className="btn btn-pri" onClick={()=>setAdding(true)}><Plus size={16}/>Add lead</button>
+            </>}
           </header>
           <main className="content">
             {dataError && <div className="lockbar" style={{background:'#fdecec',borderColor:'#f3c0c0',color:'#9c2a2a'}}>{dataError}</div>}
@@ -421,6 +429,7 @@ export default function App(){
       </div>
       {selected && <LeadDrawer lead={selected} {...{nameOf,patchLead,removeLead,isOwner,activity}} onClose={()=>setSelected(null)} />}
       {adding && <AddLead onClose={()=>setAdding(false)} onSave={addLead} myId={user.id} isOwner={isOwner} employees={employees} />}
+      {bulkImport && <BulkImport onClose={()=>setBulkImport(false)} onImport={bulkAddLeads} employees={employees} />}
     </div>
   )
 }
@@ -1047,6 +1056,133 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
       <div className="df">
         <button className="btn btn-pri" onClick={()=>{save();onClose()}}>Save changes</button>
         {isOwner && <button className="btn btn-gh" style={{color:'#BE123C',marginLeft:'auto'}} onClick={()=>removeLead(lead.id)}><Trash2 size={15}/>Delete</button>}
+      </div>
+    </div>
+  </>
+}
+
+// ---------- Bulk import ----------
+function BulkImport({onClose,onImport,employees}){
+  const [assignTo,setAssignTo]=useState(employees.find(e=>e.role==='employee')?.id||employees[0]?.id||'')
+  const [raw,setRaw]=useState('')
+  const [parsed,setParsed]=useState([])
+  const [error,setError]=useState('')
+  const [busy,setBusy]=useState(false)
+
+  function parse(text){
+    if(!text.trim()){setParsed([]);return}
+    const lines=text.trim().split('\n').filter(l=>l.trim())
+    const sep=lines[0].includes('\t')?'\t':','
+    // detect if first row is a header
+    const firstCols=lines[0].split(sep).map(c=>c.trim().toLowerCase())
+    const headerWords=['business','name','phone','email','contact','notes']
+    const hasHeader=firstCols.some(c=>headerWords.some(h=>c.includes(h)))
+    const dataLines=hasHeader?lines.slice(1):lines
+    const rows=dataLines.map(line=>{
+      const cols=line.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,''))
+      return {
+        business_name:cols[0]||'',
+        contact_name:cols[1]||'',
+        phone:cols[2]||'',
+        email:cols[3]||'',
+        notes:cols[4]||''
+      }
+    }).filter(r=>r.business_name)
+    setParsed(rows)
+  }
+
+  function handleFile(e){
+    const file=e.target.files?.[0]
+    if(!file)return
+    const reader=new FileReader()
+    reader.onload=(ev)=>{const text=ev.target?.result||'';setRaw(text);parse(text)}
+    reader.readAsText(file)
+  }
+
+  function handlePaste(text){setRaw(text);parse(text)}
+
+  async function submit(){
+    if(!parsed.length||!assignTo)return
+    setBusy(true);setError('')
+    try{
+      const leads=parsed.map(r=>({
+        business_name:r.business_name,
+        contact_name:r.contact_name||null,
+        phone:r.phone||null,
+        email:r.email||null,
+        notes:r.notes||null,
+        website_exists:false,
+        lead_source:'Bulk import',
+        status:'new',
+        assigned_to:assignTo,
+        created_by:assignTo
+      }))
+      await onImport(leads)
+    }catch(err){setError(err.message||String(err))}
+    finally{setBusy(false)}
+  }
+
+  return <>
+    <div className="scrim" onClick={onClose}/>
+    <div className="drawer">
+      <div className="dh"><div><h2>Import leads</h2><div className="muted" style={{fontSize:13,marginTop:2}}>Paste from Google Sheets or upload a CSV</div></div>
+        <button className="x" onClick={onClose}><X size={20}/></button></div>
+      <div className="db">
+        <div className="fld"><label>Assign to (setter + closer)</label>
+          <select value={assignTo} onChange={e=>setAssignTo(e.target.value)}>
+            {employees.filter(e=>e.role==='employee').map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
+          </select></div>
+
+        <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:11,padding:14,marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:8}}>Expected columns (in order)</div>
+          <div style={{fontSize:13}}>Business Name, Contact Name, Phone, Email, Notes</div>
+          <div style={{fontSize:12,color:'var(--soft)',marginTop:4}}>First column (Business Name) is required. Others are optional. Header row auto-detected and skipped.</div>
+        </div>
+
+        <div className="fld">
+          <label>Paste rows from spreadsheet</label>
+          <textarea rows={8} value={raw} onChange={e=>{handlePaste(e.target.value)}}
+            placeholder={"Diamonds Auto Body\tMike R.\t(702) 929-0730\tmike@example.com\tInterested in Tier 01\nHeavy Duty Collision\tDana\t(702) 555-0192"}
+            style={{fontFamily:'monospace',fontSize:12}}/>
+        </div>
+
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+          <div style={{flex:1,height:1,background:'var(--line)'}}/>
+          <span style={{fontSize:12,color:'var(--soft)'}}>or</span>
+          <div style={{flex:1,height:1,background:'var(--line)'}}/>
+        </div>
+
+        <div className="fld">
+          <label>Upload CSV file</label>
+          <input type="file" accept=".csv,.tsv,.txt" onChange={handleFile} style={{fontSize:13}}/>
+        </div>
+
+        {parsed.length > 0 && <>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:8}}>{parsed.length} lead{parsed.length!==1?'s':''} ready to import</div>
+          <div style={{maxHeight:240,overflowY:'auto',border:'1px solid var(--line)',borderRadius:10}}>
+            <table>
+              <thead><tr><th>Business</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+              <tbody>
+                {parsed.slice(0,50).map((r,i)=>(
+                  <tr key={i} style={{cursor:'default'}}>
+                    <td className="bn" style={{fontSize:12}}>{r.business_name}</td>
+                    <td style={{fontSize:12}}>{r.contact_name||'-'}</td>
+                    <td style={{fontSize:12}} className="muted num">{r.phone||'-'}</td>
+                    <td style={{fontSize:12}} className="muted">{r.email||'-'}</td>
+                  </tr>
+                ))}
+                {parsed.length>50 && <tr><td colSpan={4} style={{fontSize:12,color:'var(--soft)',textAlign:'center'}}>...and {parsed.length-50} more</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>}
+
+        {error && <div style={{color:'#c0392b',fontSize:13,marginTop:10}}>{error}</div>}
+      </div>
+      <div className="df">
+        <button className="btn btn-pri" disabled={!parsed.length||busy} style={{opacity:parsed.length&&!busy?1:.5}}
+          onClick={submit}>{busy?'Importing...':'Import '+parsed.length+' lead'+(parsed.length!==1?'s':'')}</button>
+        <button className="btn btn-gh" onClick={onClose}>Cancel</button>
       </div>
     </div>
   </>
