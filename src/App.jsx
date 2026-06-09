@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, UserCog,
   BarChart3, Activity, Search, Plus, Phone, LogOut, X, Trash2,
   ChevronRight, TrendingUp, Wallet, CheckCircle2, CircleDashed,
-  Filter, ArrowUpDown, Lock, Menu
+  Filter, ArrowUpDown, Lock, Menu, DollarSign
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip,
@@ -245,7 +245,7 @@ const STATUS = {
 const PIPE_ORDER = ['new','attempted_contact','contacted','follow_up_needed','proposal_sent','closed_won','closed_lost']
 const TIERS = {
   tier_01: { name: 'Tier 01 - Essentials',          one: 250, mo: 50  },
-  tier_02: { name: 'Tier 02 - Essentials + AI SEO',  one: 500, mo: 150 },
+  tier_02: { name: 'Tier 02 - AEO',  one: 0, mo: 1500 },
 }
 const ACTION_ICON = {
   call_made:      { I: Phone,        bg:'#E8F0FE', c:'#2563EB' },
@@ -364,6 +364,7 @@ export default function App(){
     team:      ['Team','Employees and their numbers'],
     reports:   ['Reports','Sales, client success and performance'],
     activity:  ['Activity', isOwner ? 'Everything happening across the team' : 'Your activity log'],
+    payroll:   ['Payroll','Commission breakdown by rep'],
   }
   const [title,sub] = NAV_TITLES[view]
 
@@ -387,6 +388,7 @@ export default function App(){
               <div className="nav-label">Admin</div>
               <NavItem id="team" icon={UserCog} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Team</NavItem>
               <NavItem id="reports" icon={BarChart3} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Reports</NavItem>
+              <NavItem id="payroll" icon={DollarSign} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Payroll</NavItem>
             </>}
           </nav>
           <div className="me">
@@ -413,6 +415,7 @@ export default function App(){
             {view==='activity' && <ActivityView {...{visibleActivity,nameOf}}/>}
             {view==='team' && isOwner && <Team {...{leads,clients,activity,employees,isOwner,onAddEmployee:addEmployee}}/>}
             {view==='reports' && isOwner && <Reports {...{leads,clients,activity,employees}}/>}
+            {view==='payroll' && isOwner && <Payroll {...{clients,employees,nameOf}}/>}
           </main>
         </div>
       </div>
@@ -471,7 +474,11 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
     const one = myClients.reduce((s,c)=>s+Number(c.one_time_fee||0),0)
     const calls = visibleActivity.filter(a=>a.action_type==='call_made').length
     const dueFollow = visibleLeads.filter(l=>l.next_followup_date && l.next_followup_date<=today && !['closed_won','closed_lost'].includes(l.status)).length
-    return { total:visibleLeads.length, active, won, mrr, one, calls, dueFollow }
+    // commission: 50% to setter (lead_responsible)
+    const setClients = clients.filter(c=>c.lead_responsible===user.id)
+    const moComm = setClients.reduce((s,c)=>s+Number(c.monthly_fee||0)*0.5,0)
+    const oneComm = setClients.reduce((s,c)=>s+Number(c.one_time_fee||0)*0.5,0)
+    return { total:visibleLeads.length, active, won, mrr, one, calls, dueFollow, moComm, oneComm, setClients }
   },[visibleLeads,clients,visibleActivity,isOwner,user])
 
   const cards = isOwner ? [
@@ -483,9 +490,9 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
   ] : [
     ['Leads Assigned', m.total, Users, ''],
     ['Active Leads', m.active, TrendingUp, 'working now'],
-    ['Calls Made', m.calls, Phone, 'logged by you'],
-    ['Follow-Ups Due', m.dueFollow, CircleDashed, 'overdue or today'],
-    ['Deals Closed', m.won, CheckCircle2, 'revenue '+money(m.one+m.mrr)],
+    ['Deals Closed', m.won, CheckCircle2, ''],
+    ['Monthly Commission', money(m.moComm), DollarSign, '50% of retainer'],
+    ['Build Commission', money(m.oneComm), Wallet, '50% of build fees'],
   ]
 
   // pipeline bar
@@ -537,6 +544,30 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
         </div>
       </div>
     </div>
+
+    {!isOwner && m.setClients.length > 0 && <>
+      <div className="sectitle" style={{marginTop:22}}>Your earnings breakdown</div>
+      <div className="tbl-wrap">
+        <table>
+          <thead><tr><th>Client you set</th><th>Tier</th><th>Monthly commission</th><th>Build commission</th></tr></thead>
+          <tbody>
+            {m.setClients.map(c=>(
+              <tr key={c.id} style={{cursor:'default'}}>
+                <td className="bn">{c.business_name}</td>
+                <td>{c.tier ? TIERS[c.tier].name.split(' - ')[0] : '-'}</td>
+                <td className="num" style={{color:'var(--accent)',fontWeight:600}}>{money(Number(c.monthly_fee||0)*0.5)}/mo</td>
+                <td className="num">{money(Number(c.one_time_fee||0)*0.5)}</td>
+              </tr>
+            ))}
+            <tr style={{cursor:'default',borderTop:'2px solid var(--line)'}}>
+              <td className="bn" colSpan={2}>Total</td>
+              <td className="num" style={{color:'var(--accent)',fontWeight:700}}>{money(m.moComm)}/mo</td>
+              <td className="num" style={{fontWeight:700}}>{money(m.oneComm)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>}
   </>
 }
 
@@ -885,6 +916,70 @@ function Reports({leads,clients,activity,employees}){
           </ResponsiveContainer>
         </div>
       </div>
+    </div>
+  </>
+}
+
+// ---------- Payroll ----------
+function Payroll({clients,employees,nameOf}){
+  const COMM = 0.5
+  const reps = employees.filter(e=>e.role==='employee').map(e=>{
+    const mine = clients.filter(c=>c.lead_responsible===e.id)
+    const moComm = mine.reduce((s,c)=>s+Number(c.monthly_fee||0)*COMM,0)
+    const oneComm = mine.reduce((s,c)=>s+Number(c.one_time_fee||0)*COMM,0)
+    return { e, mine, moComm, oneComm }
+  })
+  const totalMo = reps.reduce((s,r)=>s+r.moComm,0)
+  const totalOne = reps.reduce((s,r)=>s+r.oneComm,0)
+  const companyMrr = clients.reduce((s,c)=>s+Number(c.monthly_fee||0),0)
+  const companyBuild = clients.reduce((s,c)=>s+Number(c.one_time_fee||0),0)
+
+  return <>
+    <div className="cards" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
+      <div className="card"><div className="lab"><span className="ic"><Wallet size={15}/></span>Company MRR</div><div className="val serif num">{money(companyMrr)}</div></div>
+      <div className="card"><div className="lab"><span className="ic"><DollarSign size={15}/></span>Monthly payroll</div><div className="val serif num" style={{color:'#B45309'}}>{money(totalMo)}</div><div className="delta">rep commissions/mo</div></div>
+      <div className="card"><div className="lab"><span className="ic"><TrendingUp size={15}/></span>Net monthly</div><div className="val serif num" style={{color:'var(--accent)'}}>{money(companyMrr - totalMo)}</div><div className="delta">after commissions</div></div>
+      <div className="card"><div className="lab"><span className="ic"><Wallet size={15}/></span>Build payroll</div><div className="val serif num">{money(totalOne)}</div><div className="delta">one-time owed</div></div>
+    </div>
+
+    <div className="sectitle">Commission by rep (50% to setter)</div>
+    <div className="tbl-wrap" style={{marginBottom:22}}>
+      <table>
+        <thead><tr><th>Rep</th><th>Clients set</th><th>Monthly commission</th><th>Build commission</th><th>Total owed</th></tr></thead>
+        <tbody>
+          {reps.map(r=>(
+            <tr key={r.e.id} style={{cursor:'default'}}>
+              <td className="bn">{r.e.full_name}</td>
+              <td className="num">{r.mine.length}</td>
+              <td className="num">{money(r.moComm)}/mo</td>
+              <td className="num">{money(r.oneComm)}</td>
+              <td className="num" style={{fontWeight:700}}>{money(r.moComm + r.oneComm)}</td>
+            </tr>
+          ))}
+          {reps.length===0 && <tr><td colSpan={5} className="empty">No employees yet.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+
+    <div className="sectitle">Client-level detail</div>
+    <div className="tbl-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Tier</th><th>Monthly fee</th><th>Build fee</th><th>Setter</th><th>Setter monthly</th><th>Setter build</th></tr></thead>
+        <tbody>
+          {clients.map(c=>(
+            <tr key={c.id} style={{cursor:'default'}}>
+              <td className="bn">{c.business_name}</td>
+              <td>{c.tier ? TIERS[c.tier].name.split(' - ')[0] : '-'}</td>
+              <td className="num">{money(c.monthly_fee)}/mo</td>
+              <td className="num">{money(c.one_time_fee)}</td>
+              <td className="muted">{nameOf(c.lead_responsible)}</td>
+              <td className="num" style={{color:'#B45309'}}>{money(Number(c.monthly_fee||0)*COMM)}/mo</td>
+              <td className="num" style={{color:'#B45309'}}>{money(Number(c.one_time_fee||0)*COMM)}</td>
+            </tr>
+          ))}
+          {clients.length===0 && <tr><td colSpan={7} className="empty">No clients yet.</td></tr>}
+        </tbody>
+      </table>
     </div>
   </>
 }
