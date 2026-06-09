@@ -13,7 +13,7 @@ import { supabase } from './supabase'
 import {
   signIn, getMyProfile, listEmployees, listLeads, listClients, recentActivity,
   createLead as qCreateLead, updateLead as qUpdateLead, deleteLead as qDeleteLead,
-  updateClient as qUpdateClient, createEmployee as qCreateEmployee
+  updateClient as qUpdateClient, createEmployee as qCreateEmployee, deleteClient as qDeleteClient
 } from './queries'
 
 /* DekSites CRM - production app. UI matches the demo; data and auth are live
@@ -344,6 +344,10 @@ export default function App(){
     try{ await qUpdateClient(id,patch); await loadAll() }
     catch(err){ setDataError(err.message||String(err)) }
   }
+  async function removeClient(id){
+    try{ await qDeleteClient(id); await loadAll() }
+    catch(err){ setDataError('Delete blocked: '+(err.message||err)) }
+  }
   async function addEmployee(form){ await qCreateEmployee(form); await loadAll() }
 
   if(booting) return <Splash/>
@@ -402,7 +406,7 @@ export default function App(){
             {view==='dashboard' && <Dashboard {...{isOwner,user,visibleLeads,clients,visibleActivity,nameOf,leads}}/>}
             {view==='leads' && <Leads {...{visibleLeads,nameOf,setSelected,isOwner}}/>}
             {view==='pipeline' && <Pipeline {...{visibleLeads,nameOf,patchLead,setSelected}}/>}
-            {view==='clients' && <Clients {...{clients,nameOf,isOwner,patchClient}}/>}
+            {view==='clients' && <Clients {...{clients,nameOf,isOwner,patchClient,removeClient}}/>}
             {view==='company' && <Company {...{leads,clients,nameOf}}/>}
             {view==='activity' && <ActivityView {...{visibleActivity,nameOf}}/>}
             {view==='team' && isOwner && <Team {...{leads,clients,activity,employees,isOwner,onAddEmployee:addEmployee}}/>}
@@ -638,7 +642,7 @@ function Clients({clients,nameOf,isOwner,patchClient}){
               <td className="num">{money(c.one_time_fee)}</td>
               <td className="muted">{nameOf(c.closer_responsible)}</td>
               <td><span className="chip" style={{background:'#EEF0F2',color:'#475569'}}>{c.website_status.replace('_',' ')}</span></td>
-              {isOwner && <td><button className="btn btn-gh btn-sm" onClick={()=>setEdit(c)}>Edit</button></td>}
+              {isOwner && <td><button className="btn btn-gh btn-sm" onClick={()=>setEdit(c)}>Edit</button><button className="btn btn-gh btn-sm" style={{color:'#BE123C'}} onClick={()=>{if(window.confirm('Delete '+c.business_name+'? This removes their MRR and revenue from all reports.'))removeClient(c.id)}}><Trash2 size={13}/></button></td>}
             </tr>
           ))}
         </tbody>
