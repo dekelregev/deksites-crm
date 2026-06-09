@@ -496,7 +496,7 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
             return <div className="fi" key={a.id}>
               <div className="dot" style={{background:ic.bg,color:ic.c}}><ic.I size={15}/></div>
               <div><div className="tx"><b>{nameOf(a.actor)}</b> {a.description}</div>
-                <div className="mt">{relTime(a.at)}</div></div>
+                <div className="mt">{relTime(a.created_at)}</div></div>
             </div>
           })}
           {visibleActivity.length===0 && <div className="empty">No activity yet</div>}
@@ -701,7 +701,7 @@ function ActivityView({visibleActivity,nameOf}){
         const ic = ACTION_ICON[a.action_type] || ACTION_ICON.lead_created
         return <div className="fi" key={a.id}>
           <div className="dot" style={{background:ic.bg,color:ic.c}}><ic.I size={15}/></div>
-          <div><div className="tx"><b>{nameOf(a.actor)}</b> {a.description}</div><div className="mt">{relTime(a.at)}</div></div>
+          <div><div className="tx"><b>{nameOf(a.actor)}</b> {a.description}</div><div className="mt">{relTime(a.created_at)}</div></div>
         </div>
       })}
       {visibleActivity.length===0 && <div className="empty">No activity logged yet.</div>}
@@ -894,7 +894,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
             {history.length===0 ? <div className="empty">No history yet.</div> :
               history.map(a=>(
                 <div className="tle" key={a.id}><div className="tld"/>
-                  <div><div className="tlt">{a.description}</div><div className="tlm">{nameOf(a.actor)} · {relTime(a.at)}</div></div>
+                  <div><div className="tlt">{a.description}</div><div className="tlm">{nameOf(a.actor)} · {relTime(a.created_at)}</div></div>
                 </div>
               ))}
           </div>
