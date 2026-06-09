@@ -1085,7 +1085,8 @@ function BulkImport({onClose,onImport,employees}){
         contact_name:cols[1]||'',
         phone:cols[2]||'',
         email:cols[3]||'',
-        notes:cols[4]||''
+        website_exists:(cols[4]||'').toLowerCase().trim(),
+        notes:cols[5]||''
       }
     }).filter(r=>r.business_name)
     setParsed(rows)
@@ -1111,7 +1112,7 @@ function BulkImport({onClose,onImport,employees}){
         phone:r.phone||null,
         email:r.email||null,
         notes:r.notes||null,
-        website_exists:false,
+        website_exists:['yes','y','true','1'].includes(r.website_exists),
         lead_source:'Bulk import',
         status:'new',
         assigned_to:assignTo,
@@ -1135,14 +1136,14 @@ function BulkImport({onClose,onImport,employees}){
 
         <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:11,padding:14,marginBottom:16}}>
           <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:8}}>Expected columns (in order)</div>
-          <div style={{fontSize:13}}>Business Name, Contact Name, Phone, Email, Notes</div>
-          <div style={{fontSize:12,color:'var(--soft)',marginTop:4}}>First column (Business Name) is required. Others are optional. Header row auto-detected and skipped.</div>
+          <div style={{fontSize:13}}>Business Name, Contact Name, Phone, Email, Has Website, Notes</div>
+          <div style={{fontSize:12,color:'var(--soft)',marginTop:4}}>First column (Business Name) is required. Others are optional. Has Website = Yes or No. Header row auto-detected and skipped.</div>
         </div>
 
         <div className="fld">
           <label>Paste rows from spreadsheet</label>
           <textarea rows={8} value={raw} onChange={e=>{handlePaste(e.target.value)}}
-            placeholder={"Diamonds Auto Body\tMike R.\t(702) 929-0730\tmike@example.com\tInterested in Tier 01\nHeavy Duty Collision\tDana\t(702) 555-0192"}
+            placeholder={"Diamonds Auto Body\tMike R.\t(702) 929-0730\tmike@example.com\tNo\tInterested in Tier 01\nHeavy Duty Collision\tDana\t(702) 555-0192\t\tNo\t"}
             style={{fontFamily:'monospace',fontSize:12}}/>
         </div>
 
