@@ -957,9 +957,12 @@ function AddLead({onClose,onSave,myId,isOwner,employees}){
           <div className="fld"><label>Has website</label><select value={f.website_exists?'yes':'no'} onChange={e=>set('website_exists',e.target.value==='yes')}><option value="no">No</option><option value="yes">Yes</option></select></div>
           <div className="fld"><label>Lead source</label><input value={f.lead_source} onChange={e=>set('lead_source',e.target.value)}/></div>
         </div>
-        {isOwner && <div className="fld"><label>Assign to</label>
-          <select value={f.assigned_to} onChange={e=>set('assigned_to',e.target.value)}>
-            {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}</select></div>}
+        <div className="frow">
+          <div className="fld"><label>Setter</label><input value={(employees.find(e=>e.id===myId)||{}).full_name||'You'} disabled style={{background:'var(--paper)',color:'var(--soft)'}}/></div>
+          <div className="fld"><label>Closer</label>
+            <select value={f.assigned_to} onChange={e=>set('assigned_to',e.target.value)}>
+              {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}</select></div>
+        </div>
         <div className="fld"><label>Next follow-up</label><input type="date" value={f.next_followup_date} onChange={e=>set('next_followup_date',e.target.value)}/></div>
         <div className="fld"><label>Notes</label><textarea rows={3} value={f.notes} onChange={e=>set('notes',e.target.value)}/></div>
       </div>
