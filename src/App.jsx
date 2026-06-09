@@ -13,7 +13,8 @@ import { supabase } from './supabase'
 import {
   signIn, getMyProfile, listEmployees, listLeads, listClients, recentActivity,
   createLead as qCreateLead, updateLead as qUpdateLead, deleteLead as qDeleteLead,
-  updateClient as qUpdateClient, createEmployee as qCreateEmployee, deleteClient as qDeleteClient
+  updateClient as qUpdateClient, createEmployee as qCreateEmployee,
+  deleteClient as qDeleteClient
 } from './queries'
 
 /* DekSites CRM - production app. UI matches the demo; data and auth are live
@@ -625,7 +626,7 @@ function Pipeline({visibleLeads,nameOf,patchLead,setSelected}){
 }
 
 // ---------- Clients ----------
-function Clients({clients,nameOf,isOwner,patchClient}){
+function Clients({clients,nameOf,isOwner,patchClient,removeClient}){
   const [edit,setEdit] = useState(null)
   return <>
     {!isOwner && <div className="lockbar"><Lock size={15}/>Read-only. Only the owner can edit client tiers and fees.</div>}
@@ -642,7 +643,10 @@ function Clients({clients,nameOf,isOwner,patchClient}){
               <td className="num">{money(c.one_time_fee)}</td>
               <td className="muted">{nameOf(c.closer_responsible)}</td>
               <td><span className="chip" style={{background:'#EEF0F2',color:'#475569'}}>{c.website_status.replace('_',' ')}</span></td>
-              {isOwner && <td><button className="btn btn-gh btn-sm" onClick={()=>setEdit(c)}>Edit</button><button className="btn btn-gh btn-sm" style={{color:'#BE123C'}} onClick={()=>{if(window.confirm('Delete '+c.business_name+'? This removes their MRR and revenue from all reports.'))removeClient(c.id)}}><Trash2 size={13}/></button></td>}
+              {isOwner && <td style={{display:'flex',gap:6}}>
+                <button className="btn btn-gh btn-sm" onClick={()=>setEdit(c)}>Edit</button>
+                <button className="btn btn-gh btn-sm" style={{color:'#BE123C'}} onClick={()=>{if(window.confirm('Delete '+c.business_name+'? This removes their MRR and revenue from all reports.'))removeClient(c.id)}}><Trash2 size={13}/></button>
+              </td>}
             </tr>
           ))}
         </tbody>
