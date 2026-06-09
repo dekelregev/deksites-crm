@@ -54,18 +54,33 @@ export async function listLeads() {
   return data ?? []
 }
 
+// Empty strings break Postgres date columns. Sanitize to null.
+function clean(obj) {
+  const out = { ...obj }
+  for (const k in out) { if (out[k] === '') out[k] = null }
+  return out
+}
+
 export async function createLead(lead) {
   const { data: { user } } = await supabase.auth.getUser()
   const { data, error } = await supabase
-    .from('leads').insert({ ...lead, created_by: user?.id }).select().single()
+    .from('leads').insert({ ...clean(lead), created_by: user?.id }).select().single()
   if (error) throw error
   return data
+}
+
+// Owner bulk import: created_by and assigned_to set to the chosen employee.
+export async function bulkCreateLeads(leads) {
+  const { data, error } = await supabase
+    .from('leads').insert(leads.map(l => clean(l))).select()
+  if (error) throw error
+  return data ?? []
 }
 
 // Setting status to 'closed_won' auto-creates a client via DB trigger.
 export async function updateLead(id, patch) {
   const { data, error } = await supabase
-    .from('leads').update(patch).eq('id', id).select().single()
+    .from('leads').update(clean(patch)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
