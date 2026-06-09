@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, UserCog,
   BarChart3, Activity, Search, Plus, Phone, LogOut, X, Trash2,
   ChevronRight, TrendingUp, Wallet, CheckCircle2, CircleDashed,
-  Filter, ArrowUpDown, Lock
+  Filter, ArrowUpDown, Lock, Menu
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip,
@@ -106,7 +106,7 @@ const STYLES = `
 .fi .mt{font-size:12px;color:var(--soft);margin-top:2px}
 
 /* tables */
-.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
 .tools{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);
   align-items:center;flex-wrap:wrap}
 .srch{display:flex;align-items:center;gap:8px;background:var(--paper);
@@ -203,8 +203,33 @@ tbody tr:hover{background:#faf9f6}
 .lockbar{display:flex;align-items:center;gap:9px;background:#fbf6ea;border:1px solid #efe3c4;
   color:#7a5b12;padding:10px 14px;border-radius:11px;font-size:13px;margin-bottom:18px}
 
-@media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.rgrid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:760px){.side{display:none}.content{padding:18px}.top{padding:16px 18px}}
+/* hamburger */
+.menu-btn{display:none;color:var(--ink);padding:6px;border-radius:8px}
+.menu-btn:hover{background:var(--paper)}
+.overlay{display:none}
+
+@media(max-width:1100px){
+  .cards{grid-template-columns:repeat(3,1fr)}
+  .grid2,.rgrid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:1000px){
+  .side{position:fixed;left:-260px;top:0;height:100vh;z-index:50;transition:left .22s ease;width:248px}
+  .side.side-open{left:0}
+  .overlay{display:none;position:fixed;inset:0;background:#17150940;z-index:45}
+  .overlay.show{display:block}
+  .menu-btn{display:flex}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .kb{grid-template-columns:repeat(4,minmax(160px,1fr))}
+}
+@media(max-width:600px){
+  .content{padding:16px}
+  .top{padding:14px 16px}
+  .cards{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr}
+  .kb{grid-template-columns:repeat(2,minmax(150px,1fr))}
+  .drawer{width:100vw;max-width:100vw}
+}
 `
 
 const STATUS = {
@@ -263,6 +288,7 @@ export default function App(){
   const [dataError,setDataError]=useState('')
   const [selected,setSelected]=useState(null)
   const [adding,setAdding]=useState(false)
+  const [menuOpen,setMenuOpen]=useState(false)
 
   const isOwner = user?.role === 'owner'
   const empMap = useMemo(()=>Object.fromEntries(employees.map(e=>[e.id,e.full_name])),[employees])
@@ -339,21 +365,22 @@ export default function App(){
     <div className="dk">
       <style>{STYLES}</style>
       <div className="shell">
-        <aside className="side">
+        <div className={'overlay'+(menuOpen?' show':'')} onClick={()=>setMenuOpen(false)}/>
+        <aside className={'side'+(menuOpen?' side-open':'')}>
           <div className="brand"><div className="mark serif">D</div><div className="wm">DekSites</div></div>
           <nav className="nav">
             <div className="nav-label">Workspace</div>
-            <NavItem id="dashboard" icon={LayoutDashboard} view={view} set={setView}>Dashboard</NavItem>
-            <NavItem id="leads" icon={Users} view={view} set={setView}>Leads</NavItem>
-            <NavItem id="pipeline" icon={KanbanSquare} view={view} set={setView}>Pipeline</NavItem>
-            <NavItem id="clients" icon={Building2} view={view} set={setView}>Clients</NavItem>
+            <NavItem id="dashboard" icon={LayoutDashboard} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Dashboard</NavItem>
+            <NavItem id="leads" icon={Users} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Leads</NavItem>
+            <NavItem id="pipeline" icon={KanbanSquare} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Pipeline</NavItem>
+            <NavItem id="clients" icon={Building2} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Clients</NavItem>
             <div className="nav-label">Company</div>
-            <NavItem id="company" icon={Building2} view={view} set={setView}>Overview</NavItem>
-            <NavItem id="activity" icon={Activity} view={view} set={setView}>Activity</NavItem>
+            <NavItem id="company" icon={Building2} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Overview</NavItem>
+            <NavItem id="activity" icon={Activity} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Activity</NavItem>
             {isOwner && <>
               <div className="nav-label">Admin</div>
-              <NavItem id="team" icon={UserCog} view={view} set={setView}>Team</NavItem>
-              <NavItem id="reports" icon={BarChart3} view={view} set={setView}>Reports</NavItem>
+              <NavItem id="team" icon={UserCog} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Team</NavItem>
+              <NavItem id="reports" icon={BarChart3} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Reports</NavItem>
             </>}
           </nav>
           <div className="me">
@@ -364,6 +391,7 @@ export default function App(){
         </aside>
         <div className="main">
           <header className="top">
+            <button className="menu-btn" onClick={()=>setMenuOpen(!menuOpen)}><Menu size={22}/></button>
             <div><h1>{title}</h1><div className="sub">{sub}</div></div>
             <div className="sp"/>
             {(view==='leads'||view==='pipeline'||view==='dashboard') &&
