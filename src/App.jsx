@@ -960,7 +960,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
 // ---------- Add lead ----------
 function AddLead({onClose,onSave,myId,isOwner,employees}){
   const [f,setF] = useState({business_name:'',contact_name:'',phone:'',email:'',website_exists:false,website_url:'',
-    lead_source:'Cold call',assigned_to:myId,status:'new',last_contact_date:'',next_followup_date:'',notes:''})
+    lead_source:'Cold call',assigned_to:myId,status:'new',notes:''})
   const set=(k,v)=>setF(s=>({...s,[k]:v}))
   return <>
     <div className="scrim" onClick={onClose}/>
@@ -984,7 +984,6 @@ function AddLead({onClose,onSave,myId,isOwner,employees}){
             <select value={f.assigned_to} onChange={e=>set('assigned_to',e.target.value)}>
               {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}</select></div>
         </div>
-        <div className="fld"><label>Next follow-up</label><input type="date" value={f.next_followup_date} onChange={e=>set('next_followup_date',e.target.value)}/></div>
         <div className="fld"><label>Notes</label><textarea rows={3} value={f.notes} onChange={e=>set('notes',e.target.value)}/></div>
       </div>
       <div className="df">
