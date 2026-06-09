@@ -98,6 +98,11 @@ export async function updateClient(id, patch) {
   return data
 }
 
+export async function deleteClient(id) {
+  const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ---------------- activity ----------------
 export async function recentActivity(limit = 100) {
   const { data, error } = await supabase
