@@ -945,7 +945,7 @@ function Payroll({clients,employees,nameOf}){
     <div className="sectitle">Commission by rep (50% to setter)</div>
     <div className="tbl-wrap" style={{marginBottom:22}}>
       <table>
-        <thead><tr><th>Rep</th><th>Clients set</th><th>Monthly commission</th><th>Build commission</th><th>Total owed</th></tr></thead>
+        <thead><tr><th>Rep</th><th>Clients set</th><th>Monthly commission</th><th>Build commission</th></tr></thead>
         <tbody>
           {reps.map(r=>(
             <tr key={r.e.id} style={{cursor:'default'}}>
@@ -953,10 +953,9 @@ function Payroll({clients,employees,nameOf}){
               <td className="num">{r.mine.length}</td>
               <td className="num">{money(r.moComm)}/mo</td>
               <td className="num">{money(r.oneComm)}</td>
-              <td className="num" style={{fontWeight:700}}>{money(r.moComm + r.oneComm)}</td>
             </tr>
           ))}
-          {reps.length===0 && <tr><td colSpan={5} className="empty">No employees yet.</td></tr>}
+          {reps.length===0 && <tr><td colSpan={4} className="empty">No employees yet.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -966,17 +965,18 @@ function Payroll({clients,employees,nameOf}){
       <table>
         <thead><tr><th>Client</th><th>Tier</th><th>Monthly fee</th><th>Build fee</th><th>Setter</th><th>Setter monthly</th><th>Setter build</th></tr></thead>
         <tbody>
-          {clients.map(c=>(
-            <tr key={c.id} style={{cursor:'default'}}>
+          {clients.map(c=>{
+            const isRep = employees.find(e=>e.id===c.lead_responsible)?.role === 'employee'
+            return <tr key={c.id} style={{cursor:'default'}}>
               <td className="bn">{c.business_name}</td>
               <td>{c.tier ? TIERS[c.tier].name.split(' - ')[0] : '-'}</td>
               <td className="num">{money(c.monthly_fee)}/mo</td>
               <td className="num">{money(c.one_time_fee)}</td>
               <td className="muted">{nameOf(c.lead_responsible)}</td>
-              <td className="num" style={{color:'#B45309'}}>{money(Number(c.monthly_fee||0)*COMM)}/mo</td>
-              <td className="num" style={{color:'#B45309'}}>{money(Number(c.one_time_fee||0)*COMM)}</td>
-            </tr>
-          ))}
+              <td className="num" style={{color:'#B45309'}}>{isRep ? money(Number(c.monthly_fee||0)*COMM)+'/mo' : '-'}</td>
+              <td className="num" style={{color:'#B45309'}}>{isRep ? money(Number(c.one_time_fee||0)*COMM) : '-'}</td>
+            </tr>}
+          )}
           {clients.length===0 && <tr><td colSpan={7} className="empty">No clients yet.</td></tr>}
         </tbody>
       </table>
