@@ -588,7 +588,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
 
   const rows = useMemo(()=>{
     let r = visibleLeads.filter(l=>{
-      const hit = (l.business_name+' '+(l.contact_name||'')+' '+(l.phone||'')).toLowerCase().includes(q.toLowerCase())
+      const hit = (l.business_name+' '+(l.phone||'')).toLowerCase().includes(q.toLowerCase())
       const fok = filter==='all' || l.status===filter
       return hit && fok
     })
@@ -612,7 +612,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
   return <div className="tbl-wrap">
     <div className="tools">
       <div className="srch"><Search size={16} className="muted"/>
-        <input placeholder="Search business, contact, phone" value={q} onChange={e=>setQ(e.target.value)}/></div>
+        <input placeholder="Search business, phone" value={q} onChange={e=>setQ(e.target.value)}/></div>
       {isOwner && <select className="sel" value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
         <option value="all">All reps</option>
         {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
@@ -626,7 +626,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
     <table>
       <thead><tr>
         {th('business','Business')}
-        <th>Contact</th><th>Phone</th>
+        <th>Phone</th>
         {th('status','Status')}
         {isOwner && <th>Assigned</th>}
         {th('followup','Next follow-up')}
@@ -635,7 +635,6 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
         {rows.map(l=>(
           <tr key={l.id} onClick={()=>setSelected(l)}>
             <td className="bn">{l.business_name}</td>
-            <td>{l.contact_name||<span className="muted">-</span>}</td>
             <td className="muted num">{l.phone||'-'}</td>
             <td><Chip status={l.status}/></td>
             {isOwner && <td className="muted">{nameOf(l.assigned_to)}</td>}
@@ -1024,10 +1023,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
           <div className="fld"><label>Status</label>
             <select value={f.status} onChange={e=>set('status',e.target.value)}>
               {PIPE_ORDER.map(s=><option key={s} value={s}>{STATUS[s].label}</option>)}</select></div>
-          <div className="frow">
-            <div className="fld"><label>Contact</label><input value={f.contact_name||''} onChange={e=>set('contact_name',e.target.value)}/></div>
-            <div className="fld"><label>Phone</label><input value={f.phone||''} onChange={e=>set('phone',e.target.value)}/></div>
-          </div>
+          <div className="fld"><label>Phone</label><input value={f.phone||''} onChange={e=>set('phone',e.target.value)}/></div>
           <div className="fld"><label>Email</label><input value={f.email||''} onChange={e=>set('email',e.target.value)}/></div>
           <div className="frow">
             <div className="fld"><label>Has website</label>
@@ -1082,11 +1078,9 @@ function BulkImport({onClose,onImport,employees}){
       const cols=line.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,''))
       return {
         business_name:cols[0]||'',
-        contact_name:cols[1]||'',
-        phone:cols[2]||'',
-        email:cols[3]||'',
-        website_exists:(cols[4]||'').toLowerCase().trim(),
-        notes:cols[5]||''
+        phone:cols[1]||'',
+        website_exists:(cols[2]||'').toLowerCase().trim(),
+        notes:cols[3]||''
       }
     }).filter(r=>r.business_name)
     setParsed(rows)
@@ -1108,9 +1102,7 @@ function BulkImport({onClose,onImport,employees}){
     try{
       const leads=parsed.map(r=>({
         business_name:r.business_name,
-        contact_name:r.contact_name||null,
         phone:r.phone||null,
-        email:r.email||null,
         notes:r.notes||null,
         website_exists:['yes','y','true','1'].includes(r.website_exists),
         lead_source:'Bulk import',
@@ -1136,14 +1128,14 @@ function BulkImport({onClose,onImport,employees}){
 
         <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:11,padding:14,marginBottom:16}}>
           <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:8}}>Expected columns (in order)</div>
-          <div style={{fontSize:13}}>Business Name, Contact Name, Phone, Email, Has Website, Notes</div>
+          <div style={{fontSize:13}}>Business Name, Phone, Has Website, Notes</div>
           <div style={{fontSize:12,color:'var(--soft)',marginTop:4}}>First column (Business Name) is required. Others are optional. Has Website = Yes or No. Header row auto-detected and skipped.</div>
         </div>
 
         <div className="fld">
           <label>Paste rows from spreadsheet</label>
           <textarea rows={8} value={raw} onChange={e=>{handlePaste(e.target.value)}}
-            placeholder={"Diamonds Auto Body\tMike R.\t(702) 929-0730\tmike@example.com\tNo\tInterested in Tier 01\nHeavy Duty Collision\tDana\t(702) 555-0192\t\tNo\t"}
+            placeholder={"Diamonds Auto Body\t(702) 929-0730\tNo\tInterested in Tier 01\nHeavy Duty Collision\t(702) 555-0192\tNo\t"}
             style={{fontFamily:'monospace',fontSize:12}}/>
         </div>
 
@@ -1162,17 +1154,16 @@ function BulkImport({onClose,onImport,employees}){
           <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:8}}>{parsed.length} lead{parsed.length!==1?'s':''} ready to import</div>
           <div style={{maxHeight:240,overflowY:'auto',border:'1px solid var(--line)',borderRadius:10}}>
             <table>
-              <thead><tr><th>Business</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+              <thead><tr><th>Business</th><th>Phone</th><th>Website</th></tr></thead>
               <tbody>
                 {parsed.slice(0,50).map((r,i)=>(
                   <tr key={i} style={{cursor:'default'}}>
                     <td className="bn" style={{fontSize:12}}>{r.business_name}</td>
-                    <td style={{fontSize:12}}>{r.contact_name||'-'}</td>
                     <td style={{fontSize:12}} className="muted num">{r.phone||'-'}</td>
-                    <td style={{fontSize:12}} className="muted">{r.email||'-'}</td>
+                    <td style={{fontSize:12}} className="muted">{['yes','y','true','1'].includes(r.website_exists)?'Yes':'No'}</td>
                   </tr>
                 ))}
-                {parsed.length>50 && <tr><td colSpan={4} style={{fontSize:12,color:'var(--soft)',textAlign:'center'}}>...and {parsed.length-50} more</td></tr>}
+                {parsed.length>50 && <tr><td colSpan={3} style={{fontSize:12,color:'var(--soft)',textAlign:'center'}}>...and {parsed.length-50} more</td></tr>}
               </tbody>
             </table>
           </div>
@@ -1191,7 +1182,7 @@ function BulkImport({onClose,onImport,employees}){
 
 // ---------- Add lead ----------
 function AddLead({onClose,onSave,myId,isOwner,employees}){
-  const [f,setF] = useState({business_name:'',contact_name:'',phone:'',email:'',website_exists:false,website_url:'',
+  const [f,setF] = useState({business_name:'',phone:'',email:'',website_exists:false,website_url:'',
     lead_source:'Cold call',assigned_to:myId,status:'new',notes:''})
   const set=(k,v)=>setF(s=>({...s,[k]:v}))
   return <>
@@ -1202,10 +1193,9 @@ function AddLead({onClose,onSave,myId,isOwner,employees}){
       <div className="db">
         <div className="fld"><label>Business name *</label><input value={f.business_name} onChange={e=>set('business_name',e.target.value)} placeholder="e.g. Crescent Auto Glass"/></div>
         <div className="frow">
-          <div className="fld"><label>Contact</label><input value={f.contact_name} onChange={e=>set('contact_name',e.target.value)}/></div>
           <div className="fld"><label>Phone</label><input value={f.phone} onChange={e=>set('phone',e.target.value)}/></div>
+          <div className="fld"><label>Email</label><input value={f.email} onChange={e=>set('email',e.target.value)}/></div>
         </div>
-        <div className="fld"><label>Email</label><input value={f.email} onChange={e=>set('email',e.target.value)}/></div>
         <div className="frow">
           <div className="fld"><label>Has website</label><select value={f.website_exists?'yes':'no'} onChange={e=>set('website_exists',e.target.value==='yes')}><option value="no">No</option><option value="yes">Yes</option></select></div>
           <div className="fld"><label>Lead source</label><input value={f.lead_source} onChange={e=>set('lead_source',e.target.value)}/></div>
