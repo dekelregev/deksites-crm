@@ -26,7 +26,7 @@ const STYLES = `
 *{box-sizing:border-box;margin:0;padding:0}
 .dk{
   --paper:#F6F5F1; --surface:#FFFFFF; --ink:#17150F; --soft:#6B675C;
-  --line:#E7E3DA; --accent:#0F7A5A; --accent-2:#0C5F47; --accent-soft:#E4F1EB;
+  --line:#E7E3DA; --accent:#F5B800; --accent-2:#D9A200; --accent-soft:#FFF8E1;
   --sidebar:#17150F; --sidebar-2:#2A271F; --sidebar-soft:#A8A496;
   font-family:'Hanken Grotesk',system-ui,sans-serif;
   color:var(--ink); background:var(--paper);
@@ -43,7 +43,7 @@ const STYLES = `
   display:flex;flex-direction:column;padding:22px 14px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:10px;padding:6px 10px 22px}
 .brand .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);
-  display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+  display:grid;place-items:center;color:#1A1A1A;font-weight:700;font-size:15px}
 .brand .wm{font-size:19px;font-weight:600;letter-spacing:-.01em}
 .nav{display:flex;flex-direction:column;gap:2px;flex:1}
 .nav-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;
@@ -52,7 +52,7 @@ const STYLES = `
 .nav a{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;
   color:#D7D3C7;font-size:14px;font-weight:500;transition:.12s;width:100%;text-align:left}
 .nav a:hover{background:var(--sidebar-2);color:#fff}
-.nav a.on{background:var(--accent);color:#fff}
+.nav a.on{background:var(--accent);color:#1A1A1A}
 .nav a .lk{margin-left:auto;font-size:11px;opacity:.6;display:flex;align-items:center;gap:3px}
 .me{margin-top:auto;border-top:1px solid #34302660;padding-top:14px;
   display:flex;align-items:center;gap:10px}
@@ -74,7 +74,7 @@ const STYLES = `
 /* buttons */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;
   font-size:13.5px;font-weight:600;transition:.12s}
-.dk .btn-pri{background:var(--accent);color:#fff}
+.dk .btn-pri{background:var(--accent);color:#1A1A1A}
 .dk .btn-pri:hover{background:var(--accent-2)}
 .dk .btn-gh{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .dk .btn-gh:hover{border-color:#cfcabf;background:#fbfaf7}
@@ -183,7 +183,7 @@ tbody tr:hover{background:#faf9f6}
 .lcard{width:100%;max-width:420px}
 .lbrand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:8px}
 .lbrand .mark{width:40px;height:40px;border-radius:11px;background:var(--accent);
-  display:grid;place-items:center;color:#fff;font-weight:700;font-size:20px}
+  display:grid;place-items:center;color:#1A1A1A;font-weight:700;font-size:20px}
 .lbrand .wm{font-size:26px;font-weight:600;color:#fff;letter-spacing:-.01em}
 .lsub{text-align:center;color:#A8A496;font-size:13.5px;margin-bottom:26px}
 .lbox{background:var(--surface);border-radius:16px;padding:22px}
@@ -250,9 +250,9 @@ const TIERS = {
 }
 const ACTION_ICON = {
   call_made:      { I: Phone,        bg:'#E8F0FE', c:'#2563EB' },
-  status_changed: { I: ArrowUpDown,  bg:'#E4F1EB', c:'#0F7A5A' },
+  status_changed: { I: ArrowUpDown,  bg:'#FFF8E1', c:'#D9A200' },
   note_added:     { I: CircleDashed, bg:'#FFF1E0', c:'#B45309' },
-  client_created: { I: Building2,    bg:'#E4F1EB', c:'#0F7A5A' },
+  client_created: { I: Building2,    bg:'#FFF8E1', c:'#D9A200' },
   lead_created:   { I: Plus,         bg:'#EEF0F2', c:'#475569' },
 }
 
@@ -868,7 +868,7 @@ function Reports({leads,clients,activity,employees}){
   const won = leads.filter(l=>l.status==='closed_won').length
   const conv = leads.length ? Math.round(won/leads.length*100) : 0
   const mrr = clients.reduce((s,c)=>s+Number(c.monthly_fee||0),0)
-  const tierSplit = Object.keys(TIERS).map(t=>({name:TIERS[t].name.split(' - ')[0],value:clients.filter(c=>c.tier===t).length,c:t==='tier_01'?'#94A3B8':'#0F7A5A'}))
+  const tierSplit = Object.keys(TIERS).map(t=>({name:TIERS[t].name.split(' - ')[0],value:clients.filter(c=>c.tier===t).length,c:t==='tier_01'?'#94A3B8':'#F5B800'}))
   const perRep = employees.filter(e=>e.role==='employee').map(e=>({
     name:e.full_name, revenue:clients.filter(c=>c.closer_responsible===e.id).reduce((s,c)=>s+Number(c.monthly_fee||0)+Number(c.one_time_fee||0),0)
   }))
@@ -920,7 +920,7 @@ function Reports({leads,clients,activity,employees}){
               <XAxis dataKey="name" tick={{fontSize:12,fill:'#6B675C'}} axisLine={false} tickLine={false}/>
               <YAxis tick={{fontSize:12,fill:'#6B675C'}} axisLine={false} tickLine={false}/>
               <Tooltip cursor={{fill:'#f0eee7'}} formatter={v=>money(v)} contentStyle={{borderRadius:10,border:'1px solid #E7E3DA',fontSize:13}}/>
-              <Bar dataKey="revenue" fill="#0F7A5A" radius={[6,6,0,0]} barSize={46}/>
+              <Bar dataKey="revenue" fill="#F5B800" radius={[6,6,0,0]} barSize={46}/>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1031,7 +1031,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
       <div style={{display:'flex',gap:4,padding:'12px 22px 0'}}>
         {['details','timeline'].map(t=>(
           <button key={t} onClick={()=>setTab(t)} style={{padding:'7px 13px',borderRadius:8,fontSize:13,fontWeight:600,
-            background:tab===t?'#E4F1EB':'transparent',color:tab===t?'#0F7A5A':'#6B675C',textTransform:'capitalize'}}>{t}</button>
+            background:tab===t?'#FFF8E1':'transparent',color:tab===t?'#D9A200':'#6B675C',textTransform:'capitalize'}}>{t}</button>
         ))}
       </div>
       <div className="db">
