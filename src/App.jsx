@@ -239,11 +239,11 @@ const STATUS = {
   attempted_contact: { label: 'Attempted',     c: '#B45309' },
   contacted:         { label: 'Contacted',      c: '#2563EB' },
   follow_up_needed:  { label: 'Follow Up',      c: '#EA580C' },
-  proposal_sent:     { label: 'Proposal Sent',  c: '#0891B2' },
-  closed_won:        { label: 'Closed Won',     c: '#0F7A5A' },
+  proposal_sent:     { label: 'Meeting Booked',  c: '#0891B2' },
   closed_lost:       { label: 'Closed Lost',    c: '#BE123C' },
+  closed_won:        { label: 'Closed Won',     c: '#0F7A5A' },
 }
-const PIPE_ORDER = ['new','attempted_contact','contacted','follow_up_needed','proposal_sent','closed_won','closed_lost']
+const PIPE_ORDER = ['new','attempted_contact','contacted','follow_up_needed','proposal_sent','closed_lost','closed_won']
 const TIERS = {
   tier_01: { name: 'Tier 01 - Essentials',          one: 250, mo: 50  },
   tier_02: { name: 'Tier 02 - AEO',  one: 0, mo: 1500 },
