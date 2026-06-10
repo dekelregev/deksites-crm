@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, UserCog,
   BarChart3, Activity, Search, Plus, Phone, LogOut, X, Trash2,
   ChevronRight, TrendingUp, Wallet, CheckCircle2, CircleDashed,
-  Filter, ArrowUpDown, Lock, Menu, DollarSign, Upload
+  Filter, ArrowUpDown, Lock, Menu, DollarSign, Upload, FileText
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip,
@@ -370,6 +370,7 @@ export default function App(){
     team:      ['Team','Employees and their numbers'],
     reports:   ['Reports','Sales, client success and performance'],
     activity:  ['Activity', isOwner ? 'Everything happening across the team' : 'Your activity log'],
+    scripts:   ['Cold Call Scripts', isOwner ? 'Add and manage scripts for the team' : 'Reference scripts for your calls'],
     payroll:   ['Payroll','Commission breakdown by rep'],
   }
   const [title,sub] = NAV_TITLES[view]
@@ -390,6 +391,7 @@ export default function App(){
             <div className="nav-label">Company</div>
             <NavItem id="company" icon={Building2} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Overview</NavItem>
             <NavItem id="activity" icon={Activity} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Activity</NavItem>
+            <NavItem id="scripts" icon={FileText} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Scripts</NavItem>
             {isOwner && <>
               <div className="nav-label">Admin</div>
               <NavItem id="team" icon={UserCog} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Team</NavItem>
@@ -421,6 +423,7 @@ export default function App(){
             {view==='clients' && <Clients {...{clients,nameOf,isOwner,patchClient,removeClient}}/>}
             {view==='company' && <Company {...{leads,clients,nameOf}}/>}
             {view==='activity' && <ActivityView {...{visibleActivity,nameOf}}/>}
+            {view==='scripts' && <Scripts isOwner={isOwner}/>}
             {view==='team' && isOwner && <Team {...{leads,clients,activity,employees,isOwner,onAddEmployee:addEmployee}}/>}
             {view==='reports' && isOwner && <Reports {...{leads,clients,activity,employees}}/>}
             {view==='payroll' && isOwner && <Payroll {...{clients,employees,nameOf}}/>}
@@ -923,6 +926,21 @@ function Reports({leads,clients,activity,employees}){
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+    </div>
+  </>
+}
+
+// ---------- Scripts ----------
+function Scripts({isOwner}){
+  return <>
+    {!isOwner && <div className="lockbar"><Lock size={15}/>View only. Scripts are managed by the owner.</div>}
+    <div className="panel">
+      <div className="ph"><h3>Cold Call Scripts</h3><div className="sp"/></div>
+      <div className="empty" style={{padding:50}}>
+        <FileText size={32} style={{color:'var(--soft)',marginBottom:12}}/>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>No scripts yet</div>
+        <div style={{color:'var(--soft)',fontSize:13}}>{isOwner ? 'Scripts you add here will be visible to the whole team.' : 'Check back soon for call scripts from your manager.'}</div>
       </div>
     </div>
   </>
