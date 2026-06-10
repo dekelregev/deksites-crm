@@ -933,12 +933,53 @@ function Reports({leads,clients,activity,employees}){
 function Scripts({isOwner}){
   return <>
     {!isOwner && <div className="lockbar"><Lock size={15}/>View only. Scripts are managed by the owner.</div>}
-    <div className="panel">
-      <div className="ph"><h3>Cold Call Scripts</h3><div className="sp"/></div>
-      <div className="empty" style={{padding:50}}>
-        <FileText size={32} style={{color:'var(--soft)',marginBottom:12}}/>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>No scripts yet</div>
-        <div style={{color:'var(--soft)',fontSize:13}}>{isOwner ? 'Scripts you add here will be visible to the whole team.' : 'Check back soon for call scripts from your manager.'}</div>
+
+    <div className="panel" style={{marginBottom:20}}>
+      <div className="ph"><h3>Tier 01 - Cold Call Script</h3><div className="sp"/><span className="chip" style={{background:'var(--accent-soft)',color:'var(--accent-2)'}}>Essentials</span></div>
+      <div style={{padding:'20px 22px',fontSize:14,lineHeight:1.75}}>
+
+        <div style={{background:'var(--paper)',borderRadius:10,padding:14,marginBottom:18,border:'1px solid var(--line)'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Opening</div>
+          <p><b>"Hello, is this <span style={{color:'var(--accent-2)'}}>(company name)</span>?"</b></p>
+          <p style={{color:'var(--soft)',fontSize:13,fontStyle:'italic',marginTop:4}}>Let them introduce themselves and the company.</p>
+        </div>
+
+        <div style={{background:'var(--paper)',borderRadius:10,padding:14,marginBottom:18,border:'1px solid var(--line)'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Hook</div>
+          <p><b>"Hey <span style={{color:'var(--accent-2)'}}>(customer name)</span>! I have a quick question for you. I was just looking for your website so I can see what services you provided but I couldn't find it?"</b></p>
+          <p style={{color:'var(--soft)',fontSize:13,fontStyle:'italic',marginTop:4}}>Pause and wait for response.</p>
+        </div>
+
+        <div style={{background:'var(--paper)',borderRadius:10,padding:14,marginBottom:18,border:'1px solid var(--line)'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Transition</div>
+          <p><b>"No worries, I figured based on your reviews you guys did good work.</b></p>
+          <p style={{marginTop:8}}><b>This is <span style={{color:'var(--accent-2)'}}>(your name)</span> with DekSites, I have some pretty cool news, I went ahead and already built you a fully functioning website.</b></p>
+          <p style={{marginTop:8}}><b>Now to be fair, I don't know if this would make sense for you at the moment, but that's the reason I was calling. I can give you a quick demo tomorrow or <span style={{color:'var(--accent-2)'}}>(next day)</span>, and just show you how it looks at no cost. Are you more of an afternoon person or morning person?"</b></p>
+        </div>
+
+        <div style={{background:'var(--paper)',borderRadius:10,padding:14,marginBottom:18,border:'1px solid var(--line)'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Objection handling</div>
+          <p><b>"Totally fair, I know you're busy. Can I send you over the website so you can poke around with it?"</b></p>
+
+          <div style={{marginTop:14,paddingLeft:14,borderLeft:'3px solid var(--accent)'}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#0F7A5A',marginBottom:4}}>If yes:</div>
+            <p><b>"I'll fire it over right now, and let's grab 10 minutes <span style={{color:'var(--accent-2)'}}>(tomorrow)</span> so I can show you the couple of features you'd miss just clicking around. Does morning or afternoon work for you?"</b></p>
+          </div>
+
+          <div style={{marginTop:14,paddingLeft:14,borderLeft:'3px solid #BE123C'}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#BE123C',marginBottom:4}}>If no:</div>
+            <p><b>"I understand, I know most people in the past have looked into websites but it's always been too pricy or they haven't had the time. Which one is it for you?"</b></p>
+            <p style={{color:'var(--soft)',fontSize:13,fontStyle:'italic',marginTop:6}}>Customer explains reasoning.</p>
+            <p style={{color:'var(--soft)',fontSize:13,marginTop:6}}><b>"Too pricy"</b> = value conversation. Anchor against the $4K-$8K agency quote.</p>
+            <p style={{color:'var(--soft)',fontSize:13}}><b>"No time"</b> = friction conversation. You do everything, they do nothing.</p>
+          </div>
+        </div>
+
+        <div style={{background:'var(--paper)',borderRadius:10,padding:14,border:'1px solid var(--line)'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Soft close / follow-up</div>
+          <p><b>"Okay, let's just do this. I am going to send you over the website so you can poke around and I'll follow up with you in a few days to see where your head is at. Does <span style={{color:'var(--accent-2)'}}>(x day)</span> work or <span style={{color:'var(--accent-2)'}}>(y day)</span>?"</b></p>
+        </div>
+
       </div>
     </div>
   </>
