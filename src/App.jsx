@@ -667,7 +667,6 @@ function Pipeline({visibleLeads,nameOf,patchLead,setSelected,isOwner,repFilter,s
           {items.map(l=>(
             <div className="kc" key={l.id} onClick={()=>setSelected(l)}>
               <div className="kn">{l.business_name}</div>
-              <div className="km">{nameOf(l.assigned_to)} · {fmtDate(l.next_followup_date)}</div>
               <select value={l.status} onClick={e=>e.stopPropagation()} onChange={e=>patchLead(l.id,{status:e.target.value})}>
                 {PIPE_ORDER.map(o=><option key={o} value={o}>{STATUS[o].label}</option>)}
               </select>
@@ -764,7 +763,6 @@ function Company({leads,clients,nameOf}){
           <div className="cb">{items.map(l=>(
             <div className="kc" key={l.id} style={{cursor:'default'}}>
               <div className="kn">{l.business_name}</div>
-              <div className="km">{nameOf(l.assigned_to)}</div>
             </div>))}</div>
         </div>
       })}
