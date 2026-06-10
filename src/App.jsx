@@ -1059,7 +1059,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
 
 // ---------- Bulk import ----------
 function BulkImport({onClose,onImport,employees}){
-  const [assignTo,setAssignTo]=useState(employees.find(e=>e.role==='employee')?.id||employees[0]?.id||'')
+  const [assignTo,setAssignTo]=useState(employees[0]?.id||'')
   const [raw,setRaw]=useState('')
   const [parsed,setParsed]=useState([])
   const [error,setError]=useState('')
@@ -1123,7 +1123,7 @@ function BulkImport({onClose,onImport,employees}){
       <div className="db">
         <div className="fld"><label>Assign to (setter + closer)</label>
           <select value={assignTo} onChange={e=>setAssignTo(e.target.value)}>
-            {employees.filter(e=>e.role==='employee').map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
+            {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}{e.role==='owner'?' (you)':''}</option>)}
           </select></div>
 
         <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:11,padding:14,marginBottom:16}}>
