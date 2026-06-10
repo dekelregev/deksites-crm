@@ -392,11 +392,11 @@ export default function App(){
             <NavItem id="company" icon={Building2} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Overview</NavItem>
             <NavItem id="activity" icon={Activity} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Activity</NavItem>
             <NavItem id="scripts" icon={FileText} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Scripts</NavItem>
+            <NavItem id="payroll" icon={DollarSign} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Payroll</NavItem>
             {isOwner && <>
               <div className="nav-label">Admin</div>
               <NavItem id="team" icon={UserCog} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Team</NavItem>
               <NavItem id="reports" icon={BarChart3} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Reports</NavItem>
-              <NavItem id="payroll" icon={DollarSign} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Payroll</NavItem>
             </>}
           </nav>
           <div className="me">
@@ -426,7 +426,7 @@ export default function App(){
             {view==='scripts' && <Scripts isOwner={isOwner}/>}
             {view==='team' && isOwner && <Team {...{leads,clients,activity,employees,isOwner,onAddEmployee:addEmployee}}/>}
             {view==='reports' && isOwner && <Reports {...{leads,clients,activity,employees}}/>}
-            {view==='payroll' && isOwner && <Payroll {...{clients,employees,nameOf}}/>}
+            {view==='payroll' && <Payroll {...{clients,employees,nameOf}}/>}
           </main>
         </div>
       </div>
