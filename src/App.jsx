@@ -134,7 +134,7 @@ tbody tr:hover{background:#faf9f6}
 .chip .cd{width:6px;height:6px;border-radius:50%}
 
 /* kanban */
-.kb{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.kb{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding-bottom:8px}
 .col{background:var(--surface);border:1px solid var(--line);border-radius:13px;
   display:flex;flex-direction:column;min-height:200px}
 .col .ch{padding:12px 13px;border-bottom:1px solid var(--line);display:flex;
@@ -222,14 +222,14 @@ tbody tr:hover{background:#faf9f6}
   .overlay.show{display:block}
   .menu-btn{display:flex}
   .cards{grid-template-columns:repeat(2,1fr)}
-  .kb{grid-template-columns:repeat(4,minmax(160px,1fr))}
+  .kb{grid-template-columns:repeat(7,minmax(120px,1fr));overflow-x:auto}
 }
 @media(max-width:600px){
   .content{padding:16px}
   .top{padding:14px 16px}
   .cards{grid-template-columns:1fr}
   .frow{grid-template-columns:1fr}
-  .kb{grid-template-columns:repeat(2,minmax(150px,1fr))}
+  .kb{grid-template-columns:repeat(7,minmax(100px,1fr));overflow-x:auto}
   .drawer{width:100vw;max-width:100vw}
 }
 `
@@ -753,7 +753,7 @@ function Company({leads,clients,nameOf}){
       <div className="card"><div className="lab"><span className="ic"><Building2 size={15}/></span>Active Clients</div><div className="val serif num">{clients.length}</div></div>
     </div>
     <div className="sectitle">Leads board</div>
-    <div className="kb" style={{gridTemplateColumns:'repeat(6,minmax(170px,1fr))',marginBottom:24}}>
+    <div className="kb" style={{gridTemplateColumns:'repeat(6,1fr)',marginBottom:24}}>
       {board.map(s=>{
         const items = leads.filter(l=>l.status===s || (s==='contacted'&&l.status==='attempted_contact'))
         return <div className="col" key={s}>
