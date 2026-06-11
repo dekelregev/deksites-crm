@@ -746,7 +746,6 @@ function ClientEdit({client,onClose,onSave}){
 function Company({leads,clients,nameOf}){
   const mrr = clients.reduce((s,c)=>s+Number(c.monthly_fee||0),0)
   const build = clients.reduce((s,c)=>s+Number(c.one_time_fee||0),0)
-  const board = ['new','contacted','follow_up_needed','proposal_sent','closed_won','closed_lost']
   return <>
     <div className="lockbar"><Lock size={15}/>Shared company board. Everyone can view, nobody edits here.</div>
     <div className="cards" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
@@ -754,21 +753,8 @@ function Company({leads,clients,nameOf}){
       <div className="card"><div className="lab"><span className="ic"><TrendingUp size={15}/></span>Total Build Revenue</div><div className="val serif num">{money(build)}</div></div>
       <div className="card"><div className="lab"><span className="ic"><Building2 size={15}/></span>Active Clients</div><div className="val serif num">{clients.length}</div></div>
     </div>
-    <div className="sectitle">Leads board</div>
-    <div className="kb" style={{gridTemplateColumns:'repeat(6,1fr)',marginBottom:24}}>
-      {board.map(s=>{
-        const items = leads.filter(l=>l.status===s || (s==='contacted'&&l.status==='attempted_contact'))
-        return <div className="col" key={s}>
-          <div className="ch"><span style={{width:8,height:8,borderRadius:'50%',background:STATUS[s].c,display:'inline-block'}}/>{STATUS[s].label}<span className="ct num">{items.length}</span></div>
-          <div className="cb">{items.map(l=>(
-            <div className="kc" key={l.id} style={{cursor:'default'}}>
-              <div className="kn">{l.business_name}</div>
-            </div>))}</div>
-        </div>
-      })}
-    </div>
     <div className="sectitle">Active clients</div>
-    <div className="tbl-wrap">
+    <div className="tbl-wrap" style={{marginBottom:22}}>
       <table><thead><tr><th>Client</th><th>Tier</th><th>Lead gen</th><th>Closer</th><th>Website</th></tr></thead>
         <tbody>{clients.map(c=>(
           <tr key={c.id} style={{cursor:'default'}}>
@@ -778,6 +764,64 @@ function Company({leads,clients,nameOf}){
             <td className="muted">{nameOf(c.closer_responsible)}</td>
             <td><span className="chip" style={{background:'#EEF0F2',color:'#475569'}}>{c.website_status.replace('_',' ')}</span></td>
           </tr>))}</tbody></table>
+    </div>
+
+    <div className="sectitle">Team notes</div>
+    <div className="panel" style={{marginBottom:22}}>
+      <div style={{padding:'18px 22px'}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:10}}>Team meetings / sales training</div>
+        <div style={{fontSize:14,color:'var(--ink)',lineHeight:1.6}}>Every <b>Saturday</b> and <b>Wednesday</b></div>
+      </div>
+    </div>
+
+    <div className="panel" style={{marginBottom:22}}>
+      <div className="ph"><h3>Commission splits</h3></div>
+      <div style={{padding:'16px 22px'}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:12,color:'var(--accent-2)'}}>Essentials (one-time)</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:6}}>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$250</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Dek</div>
+          </div>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$150</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Closer</div>
+          </div>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$100</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Setter</div>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:'var(--soft)',marginBottom:20,fontStyle:'italic'}}>If you close your own deals you get 50%</div>
+
+        <div style={{fontSize:13,fontWeight:600,marginBottom:12,color:'var(--accent-2)'}}>AEO (monthly)</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:6}}>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$750</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Dek</div>
+          </div>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$400</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Closer</div>
+          </div>
+          <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:9,padding:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:600}} className="serif num">$350</div>
+            <div style={{fontSize:12,color:'var(--soft)',marginTop:2}}>Setter</div>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:'var(--soft)',fontStyle:'italic'}}>If you close your own deals you get 50%</div>
+      </div>
+    </div>
+
+    <div className="panel">
+      <div style={{padding:'18px 22px'}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:10}}>Stripe payment link</div>
+        <div style={{fontSize:13,marginBottom:6}}>Essentials customers:</div>
+        <a href="https://buy.stripe.com/3cI9AUfrham3cNmcRW2ZO00" target="_blank" rel="noopener noreferrer"
+          style={{fontSize:13,color:'var(--accent-2)',wordBreak:'break-all'}}>
+          https://buy.stripe.com/3cI9AUfrham3cNmcRW2ZO00
+        </a>
+      </div>
     </div>
   </>
 }
