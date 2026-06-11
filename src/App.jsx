@@ -245,8 +245,26 @@ const STATUS = {
 }
 const PIPE_ORDER = ['new','attempted_contact','contacted','follow_up_needed','proposal_sent','closed_lost','closed_won']
 const TIERS = {
-  tier_01: { name: 'Tier 01 - Essentials',          one: 250, mo: 50  },
+  tier_01: { name: 'Tier 01 - Essentials',          one: 500, mo: 50  },
   tier_02: { name: 'Tier 02 - AEO',  one: 0, mo: 1500 },
+}
+// Commission splits: fixed dollar amounts per tier.
+// "self" = when setter and closer are the same person (50% of total).
+const COMMISSION = {
+  tier_01: { type:'one_time', setter:100, closer:150, self:250, dek:250 },
+  tier_02: { type:'monthly',  setter:350, closer:400, self:750, dek:750 },
+}
+function getCommission(client) {
+  const c = COMMISSION[client.tier]
+  if (!c) return { setter:0, closer:0, dek:0, type:'one_time' }
+  const selfClose = client.lead_responsible === client.closer_responsible
+  return {
+    setter: selfClose ? c.self : c.setter,
+    closer: selfClose ? 0 : c.closer,
+    dek: c.dek,
+    type: c.type,
+    selfClose,
+  }
 }
 const ACTION_ICON = {
   call_made:      { I: Phone,        bg:'#E8F0FE', c:'#2563EB' },
@@ -486,11 +504,26 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
     const one = myClients.reduce((s,c)=>s+Number(c.one_time_fee||0),0)
     const calls = visibleActivity.filter(a=>a.action_type==='call_made').length
     const dueFollow = visibleLeads.filter(l=>l.next_followup_date && l.next_followup_date<=today && !['closed_won','closed_lost'].includes(l.status)).length
-    // commission: 50% to setter (lead_responsible)
-    const setClients = clients.filter(c=>c.lead_responsible===user.id)
-    const moComm = setClients.reduce((s,c)=>s+Number(c.monthly_fee||0)*0.5,0)
-    const oneComm = setClients.reduce((s,c)=>s+Number(c.one_time_fee||0)*0.5,0)
-    return { total:visibleLeads.length, active, won, mrr, one, calls, dueFollow, moComm, oneComm, setClients }
+    // commission per role
+    let monthlyEarn = 0, oneTimeEarn = 0
+    const myDeals = []
+    clients.forEach(c=>{
+      const cm = getCommission(c)
+      const isSetter = c.lead_responsible === user.id
+      const isCloser = c.closer_responsible === user.id
+      if (!isSetter && !isCloser) return
+      let earn = 0
+      if (cm.selfClose && isSetter) {
+        earn = cm.setter // self-close amount
+      } else {
+        if (isSetter) earn += cm.setter
+        if (isCloser) earn += cm.closer
+      }
+      if (cm.type === 'monthly') monthlyEarn += earn
+      else oneTimeEarn += earn
+      if (earn > 0) myDeals.push({ ...c, earn, cm })
+    })
+    return { total:visibleLeads.length, active, won, mrr, one, calls, dueFollow, monthlyEarn, oneTimeEarn, myDeals }
   },[visibleLeads,clients,visibleActivity,isOwner,user])
 
   const cards = isOwner ? [
@@ -503,8 +536,8 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
     ['Leads Assigned', m.total, Users, ''],
     ['Active Leads', m.active, TrendingUp, 'working now'],
     ['Deals Closed', m.won, CheckCircle2, ''],
-    ['Monthly Commission', money(m.moComm), DollarSign, '50% of retainer'],
-    ['Build Commission', money(m.oneComm), Wallet, '50% of build fees'],
+    ['Monthly Earnings', money(m.monthlyEarn)+'/mo', DollarSign, 'recurring commission'],
+    ['One-Time Earnings', money(m.oneTimeEarn), Wallet, 'build commission'],
   ]
 
   // pipeline bar
@@ -557,25 +590,23 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
       </div>
     </div>
 
-    {!isOwner && m.setClients.length > 0 && <>
+    {!isOwner && m.myDeals.length > 0 && <>
       <div className="sectitle" style={{marginTop:22}}>Your earnings breakdown</div>
       <div className="tbl-wrap">
         <table>
-          <thead><tr><th>Client you set</th><th>Tier</th><th>Monthly commission</th><th>Build commission</th></tr></thead>
+          <thead><tr><th>Client</th><th>Tier</th><th>Your role</th><th>Your cut</th></tr></thead>
           <tbody>
-            {m.setClients.map(c=>(
-              <tr key={c.id} style={{cursor:'default'}}>
+            {m.myDeals.map(c=>{
+              const isSetter = c.lead_responsible === user.id
+              const isCloser = c.closer_responsible === user.id
+              const role = c.cm.selfClose ? 'Set + closed' : [isSetter&&'Setter',isCloser&&'Closer'].filter(Boolean).join(' + ')
+              return <tr key={c.id} style={{cursor:'default'}}>
                 <td className="bn">{c.business_name}</td>
                 <td>{c.tier ? TIERS[c.tier].name.split(' - ')[0] : '-'}</td>
-                <td className="num" style={{color:'var(--accent)',fontWeight:600}}>{money(Number(c.monthly_fee||0)*0.5)}/mo</td>
-                <td className="num">{money(Number(c.one_time_fee||0)*0.5)}</td>
+                <td className="muted">{role}</td>
+                <td className="num" style={{color:'var(--accent-2)',fontWeight:600}}>{money(c.earn)}{c.cm.type==='monthly'?'/mo':''}</td>
               </tr>
-            ))}
-            <tr style={{cursor:'default',borderTop:'2px solid var(--line)'}}>
-              <td className="bn" colSpan={2}>Total</td>
-              <td className="num" style={{color:'var(--accent)',fontWeight:700}}>{money(m.moComm)}/mo</td>
-              <td className="num" style={{fontWeight:700}}>{money(m.oneComm)}</td>
-            </tr>
+            })}
           </tbody>
         </table>
       </div>
@@ -1031,15 +1062,24 @@ function Scripts({isOwner}){
 
 // ---------- Payroll ----------
 function Payroll({clients,employees,nameOf}){
-  const COMM = 0.5
+  // Compute per-rep earnings across both roles (setter and closer)
   const reps = employees.filter(e=>e.role==='employee').map(e=>{
-    const mine = clients.filter(c=>c.lead_responsible===e.id)
-    const moComm = mine.reduce((s,c)=>s+Number(c.monthly_fee||0)*COMM,0)
-    const oneComm = mine.reduce((s,c)=>s+Number(c.one_time_fee||0)*COMM,0)
-    return { e, mine, moComm, oneComm }
+    let monthlyEarn = 0, oneTimeEarn = 0, dealCount = 0
+    clients.forEach(c=>{
+      const cm = getCommission(c)
+      const isSetter = c.lead_responsible === e.id
+      const isCloser = c.closer_responsible === e.id
+      if (!isSetter && !isCloser) return
+      let earn = 0
+      if (cm.selfClose && isSetter) { earn = cm.setter }
+      else { if (isSetter) earn += cm.setter; if (isCloser) earn += cm.closer }
+      if (earn > 0) dealCount++
+      if (cm.type === 'monthly') monthlyEarn += earn; else oneTimeEarn += earn
+    })
+    return { e, monthlyEarn, oneTimeEarn, dealCount }
   })
-  const totalMo = reps.reduce((s,r)=>s+r.moComm,0)
-  const totalOne = reps.reduce((s,r)=>s+r.oneComm,0)
+  const totalMo = reps.reduce((s,r)=>s+r.monthlyEarn,0)
+  const totalOne = reps.reduce((s,r)=>s+r.oneTimeEarn,0)
   const companyMrr = clients.reduce((s,c)=>s+Number(c.monthly_fee||0),0)
   const companyBuild = clients.reduce((s,c)=>s+Number(c.one_time_fee||0),0)
 
@@ -1047,21 +1087,21 @@ function Payroll({clients,employees,nameOf}){
     <div className="cards" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
       <div className="card"><div className="lab"><span className="ic"><Wallet size={15}/></span>Company MRR</div><div className="val serif num">{money(companyMrr)}</div></div>
       <div className="card"><div className="lab"><span className="ic"><DollarSign size={15}/></span>Monthly payroll</div><div className="val serif num" style={{color:'#B45309'}}>{money(totalMo)}</div><div className="delta">rep commissions/mo</div></div>
-      <div className="card"><div className="lab"><span className="ic"><TrendingUp size={15}/></span>Net monthly</div><div className="val serif num" style={{color:'var(--accent)'}}>{money(companyMrr - totalMo)}</div><div className="delta">after commissions</div></div>
+      <div className="card"><div className="lab"><span className="ic"><TrendingUp size={15}/></span>Net monthly</div><div className="val serif num" style={{color:'var(--accent-2)'}}>{money(companyMrr - totalMo)}</div><div className="delta">after commissions</div></div>
       <div className="card"><div className="lab"><span className="ic"><Wallet size={15}/></span>Build payroll</div><div className="val serif num">{money(totalOne)}</div><div className="delta">one-time owed</div></div>
     </div>
 
-    <div className="sectitle">Commission by rep (50% to setter)</div>
+    <div className="sectitle">Commission by rep</div>
     <div className="tbl-wrap" style={{marginBottom:22}}>
       <table>
-        <thead><tr><th>Rep</th><th>Clients set</th><th>Monthly commission</th><th>Build commission</th></tr></thead>
+        <thead><tr><th>Rep</th><th>Deals involved</th><th>Monthly earnings</th><th>One-time earnings</th></tr></thead>
         <tbody>
           {reps.map(r=>(
             <tr key={r.e.id} style={{cursor:'default'}}>
               <td className="bn">{r.e.full_name}</td>
-              <td className="num">{r.mine.length}</td>
-              <td className="num">{money(r.moComm)}/mo</td>
-              <td className="num">{money(r.oneComm)}</td>
+              <td className="num">{r.dealCount}</td>
+              <td className="num">{money(r.monthlyEarn)}/mo</td>
+              <td className="num">{money(r.oneTimeEarn)}</td>
             </tr>
           ))}
           {reps.length===0 && <tr><td colSpan={4} className="empty">No employees yet.</td></tr>}
@@ -1072,21 +1112,24 @@ function Payroll({clients,employees,nameOf}){
     <div className="sectitle">Client-level detail</div>
     <div className="tbl-wrap">
       <table>
-        <thead><tr><th>Client</th><th>Tier</th><th>Monthly fee</th><th>Build fee</th><th>Setter</th><th>Setter monthly</th><th>Setter build</th></tr></thead>
+        <thead><tr><th>Client</th><th>Tier</th><th>Setter</th><th>Closer</th><th>Self-closed</th><th>Setter payout</th><th>Closer payout</th><th>Dek keeps</th></tr></thead>
         <tbody>
           {clients.map(c=>{
-            const isRep = employees.find(e=>e.id===c.lead_responsible)?.role === 'employee'
+            const cm = getCommission(c)
+            const isOwnerSetter = employees.find(e=>e.id===c.lead_responsible)?.role === 'owner'
+            const isOwnerCloser = employees.find(e=>e.id===c.closer_responsible)?.role === 'owner'
             return <tr key={c.id} style={{cursor:'default'}}>
               <td className="bn">{c.business_name}</td>
               <td>{c.tier ? TIERS[c.tier].name.split(' - ')[0] : '-'}</td>
-              <td className="num">{money(c.monthly_fee)}/mo</td>
-              <td className="num">{money(c.one_time_fee)}</td>
               <td className="muted">{nameOf(c.lead_responsible)}</td>
-              <td className="num" style={{color:'#B45309'}}>{isRep ? money(Number(c.monthly_fee||0)*COMM)+'/mo' : '-'}</td>
-              <td className="num" style={{color:'#B45309'}}>{isRep ? money(Number(c.one_time_fee||0)*COMM) : '-'}</td>
+              <td className="muted">{nameOf(c.closer_responsible)}</td>
+              <td className="muted">{cm.selfClose ? 'Yes' : 'No'}</td>
+              <td className="num" style={{color:isOwnerSetter?'var(--soft)':'#B45309'}}>{isOwnerSetter ? '-' : money(cm.setter)}{cm.type==='monthly'&&!isOwnerSetter?'/mo':''}</td>
+              <td className="num" style={{color:isOwnerCloser||cm.selfClose?'var(--soft)':'#B45309'}}>{isOwnerCloser||cm.selfClose ? '-' : money(cm.closer)}{cm.type==='monthly'&&!isOwnerCloser&&!cm.selfClose?'/mo':''}</td>
+              <td className="num" style={{fontWeight:600}}>{money(cm.dek)}{cm.type==='monthly'?'/mo':''}</td>
             </tr>}
           )}
-          {clients.length===0 && <tr><td colSpan={7} className="empty">No clients yet.</td></tr>}
+          {clients.length===0 && <tr><td colSpan={8} className="empty">No clients yet.</td></tr>}
         </tbody>
       </table>
     </div>
