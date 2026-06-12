@@ -448,7 +448,7 @@ export default function App(){
           </main>
         </div>
       </div>
-      {selected && <LeadDrawer lead={selected} {...{nameOf,patchLead,removeLead,isOwner,activity}} onClose={()=>setSelected(null)} />}
+      {selected && <LeadDrawer lead={selected} {...{nameOf,patchLead,removeLead,isOwner,activity,employees}} onClose={()=>setSelected(null)} />}
       {adding && <AddLead onClose={()=>setAdding(false)} onSave={addLead} myId={user.id} isOwner={isOwner} employees={employees} />}
       {bulkImport && <BulkImport onClose={()=>setBulkImport(false)} onImport={bulkAddLeads} employees={employees} />}
     </div>
@@ -1137,7 +1137,7 @@ function Payroll({clients,employees,nameOf}){
 }
 
 // ---------- Lead drawer ----------
-function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose}){
+function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose,employees}){
   const [tab,setTab] = useState('details')
   const [f,setF] = useState(lead)
   useEffect(()=>setF(lead),[lead])
@@ -1145,7 +1145,8 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
   const save=()=>patchLead(lead.id,{
     contact_name:f.contact_name,phone:f.phone,email:f.email,website_url:f.website_url,
     website_exists:f.website_exists,lead_source:f.lead_source,status:f.status,
-    next_followup_date:f.next_followup_date,last_contact_date:f.last_contact_date,notes:f.notes
+    next_followup_date:f.next_followup_date,last_contact_date:f.last_contact_date,notes:f.notes,
+    assigned_to:f.assigned_to
   })
   const history = activity.filter(a=>a.description.includes(lead.business_name))
 
@@ -1181,7 +1182,10 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose})
             <div className="fld"><label>Next follow-up</label><input type="date" value={f.next_followup_date||''} onChange={e=>set('next_followup_date',e.target.value)}/></div>
           </div>
           <div className="fld"><label>Notes</label><textarea rows={4} value={f.notes||''} onChange={e=>set('notes',e.target.value)}/></div>
-          <div className="fld"><label>Assigned to</label><input value={nameOf(f.assigned_to)} disabled/></div>
+          <div className="fld"><label>Closer</label>
+            <select value={f.assigned_to||''} onChange={e=>set('assigned_to',e.target.value)}>
+              {employees.map(e=><option key={e.id} value={e.id}>{e.full_name}</option>)}
+            </select></div>
         </> : <>
           <div className="tl">
             {history.length===0 ? <div className="empty">No history yet.</div> :
