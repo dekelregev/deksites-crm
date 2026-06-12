@@ -680,6 +680,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
         <th>Phone</th>
         <th>Website</th>
         <th>State</th>
+        <th>City</th>
         {th('status','Status')}
         {isOwner && <th>Setter</th>}
         {isOwner && <th>Closer</th>}
@@ -691,6 +692,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
             <td className="muted num">{l.phone||'-'}</td>
             <td className="muted">{l.website_exists?'Yes':'No'}</td>
             <td className="muted">{l.state||'-'}</td>
+            <td className="muted">{l.city||'-'}</td>
             <td><Chip status={l.status}/></td>
             {isOwner && <td className="muted">{nameOf(l.created_by)}</td>}
             {isOwner && <td className="muted">{nameOf(l.assigned_to)}</td>}
@@ -1165,7 +1167,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose,e
   const set=(k,v)=>setF(s=>({...s,[k]:v}))
   const save=()=>patchLead(lead.id,{
     contact_name:f.contact_name,phone:f.phone,email:f.email,website_url:f.website_url,
-    website_exists:f.website_exists,lead_source:f.lead_source,status:f.status,state:f.state,
+    website_exists:f.website_exists,lead_source:f.lead_source,status:f.status,state:f.state,city:f.city,
     next_followup_date:f.next_followup_date,last_contact_date:f.last_contact_date,notes:f.notes,
     assigned_to:f.assigned_to
   })
@@ -1197,7 +1199,10 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose,e
                 <option value="no">No</option><option value="yes">Yes</option></select></div>
             <div className="fld"><label>Lead source</label><input value={f.lead_source||''} onChange={e=>set('lead_source',e.target.value)}/></div>
           </div>
-          <div className="fld"><label>State</label><input value={f.state||''} onChange={e=>set('state',e.target.value)} placeholder="e.g. NV"/></div>
+          <div className="frow">
+            <div className="fld"><label>State</label><input value={f.state||''} onChange={e=>set('state',e.target.value)} placeholder="e.g. NV"/></div>
+            <div className="fld"><label>City</label><input value={f.city||''} onChange={e=>set('city',e.target.value)} placeholder="e.g. Las Vegas"/></div>
+          </div>
           {f.website_exists && <div className="fld"><label>Website URL</label><input value={f.website_url||''} onChange={e=>set('website_url',e.target.value)}/></div>}
           <div className="frow">
             <div className="fld"><label>Last contact</label><input type="date" value={f.last_contact_date||''} onChange={e=>set('last_contact_date',e.target.value)}/></div>
@@ -1251,7 +1256,8 @@ function BulkImport({onClose,onImport,employees}){
         phone:cols[1]||'',
         website_exists:(cols[2]||'').toLowerCase().trim(),
         state:cols[3]||'',
-        notes:cols[4]||''
+        city:cols[4]||'',
+        notes:cols[5]||''
       }
     }).filter(r=>r.business_name)
     setParsed(rows)
@@ -1275,6 +1281,7 @@ function BulkImport({onClose,onImport,employees}){
         business_name:r.business_name,
         phone:r.phone?formatPhone(r.phone):null,
         state:r.state||null,
+        city:r.city||null,
         notes:r.notes||null,
         website_exists:['yes','y','true','1'].includes(r.website_exists),
         lead_source:'Bulk import',
@@ -1300,14 +1307,14 @@ function BulkImport({onClose,onImport,employees}){
 
         <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:11,padding:14,marginBottom:16}}>
           <div style={{fontSize:12,fontWeight:600,color:'var(--soft)',marginBottom:8}}>Expected columns (in order)</div>
-          <div style={{fontSize:13}}>Business Name, Phone, Has Website, State, Notes</div>
+          <div style={{fontSize:13}}>Business Name, Phone, Has Website, State, City, Notes</div>
           <div style={{fontSize:12,color:'var(--soft)',marginTop:4}}>First column (Business Name) is required. Others are optional. Has Website = Yes or No. Header row auto-detected and skipped.</div>
         </div>
 
         <div className="fld">
           <label>Paste rows from spreadsheet</label>
           <textarea rows={8} value={raw} onChange={e=>{handlePaste(e.target.value)}}
-            placeholder={"Diamonds Auto Body\t(702) 929-0730\tNo\tNV\tInterested in Tier 01\nHeavy Duty Collision\t(702) 555-0192\tNo\tNV\t"}
+            placeholder={"Diamonds Auto Body\t(702) 929-0730\tNo\tNV\tLas Vegas\tInterested in Tier 01\nHeavy Duty Collision\t(702) 555-0192\tNo\tNV\tLas Vegas\t"}
             style={{fontFamily:'monospace',fontSize:12}}/>
         </div>
 
@@ -1326,7 +1333,7 @@ function BulkImport({onClose,onImport,employees}){
           <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:8}}>{parsed.length} lead{parsed.length!==1?'s':''} ready to import</div>
           <div style={{maxHeight:240,overflowY:'auto',border:'1px solid var(--line)',borderRadius:10}}>
             <table>
-              <thead><tr><th>Business</th><th>Phone</th><th>Website</th><th>State</th></tr></thead>
+              <thead><tr><th>Business</th><th>Phone</th><th>Website</th><th>State</th><th>City</th></tr></thead>
               <tbody>
                 {parsed.slice(0,50).map((r,i)=>(
                   <tr key={i} style={{cursor:'default'}}>
@@ -1334,9 +1341,10 @@ function BulkImport({onClose,onImport,employees}){
                     <td style={{fontSize:12}} className="muted num">{r.phone||'-'}</td>
                     <td style={{fontSize:12}} className="muted">{['yes','y','true','1'].includes(r.website_exists)?'Yes':'No'}</td>
                     <td style={{fontSize:12}} className="muted">{r.state||'-'}</td>
+                    <td style={{fontSize:12}} className="muted">{r.city||'-'}</td>
                   </tr>
                 ))}
-                {parsed.length>50 && <tr><td colSpan={4} style={{fontSize:12,color:'var(--soft)',textAlign:'center'}}>...and {parsed.length-50} more</td></tr>}
+                {parsed.length>50 && <tr><td colSpan={5} style={{fontSize:12,color:'var(--soft)',textAlign:'center'}}>...and {parsed.length-50} more</td></tr>}
               </tbody>
             </table>
           </div>
@@ -1356,7 +1364,7 @@ function BulkImport({onClose,onImport,employees}){
 // ---------- Add lead ----------
 function AddLead({onClose,onSave,myId,isOwner,employees}){
   const [f,setF] = useState({business_name:'',phone:'',email:'',website_exists:false,website_url:'',
-    lead_source:'Cold call',assigned_to:myId,status:'new',state:'',notes:''})
+    lead_source:'Cold call',assigned_to:myId,status:'new',state:'',city:'',notes:''})
   const set=(k,v)=>setF(s=>({...s,[k]:v}))
   return <>
     <div className="scrim" onClick={onClose}/>
@@ -1373,7 +1381,10 @@ function AddLead({onClose,onSave,myId,isOwner,employees}){
           <div className="fld"><label>Has website</label><select value={f.website_exists?'yes':'no'} onChange={e=>set('website_exists',e.target.value==='yes')}><option value="no">No</option><option value="yes">Yes</option></select></div>
           <div className="fld"><label>Lead source</label><input value={f.lead_source} onChange={e=>set('lead_source',e.target.value)}/></div>
         </div>
-        <div className="fld"><label>State</label><input value={f.state} onChange={e=>set('state',e.target.value)} placeholder="e.g. NV"/></div>
+        <div className="frow">
+          <div className="fld"><label>State</label><input value={f.state} onChange={e=>set('state',e.target.value)} placeholder="e.g. NV"/></div>
+          <div className="fld"><label>City</label><input value={f.city} onChange={e=>set('city',e.target.value)} placeholder="e.g. Las Vegas"/></div>
+        </div>
         <div className="frow">
           <div className="fld"><label>Setter</label><input value={(employees.find(e=>e.id===myId)||{}).full_name||'You'} disabled style={{background:'var(--paper)',color:'var(--soft)'}}/></div>
           <div className="fld"><label>Closer</label>
