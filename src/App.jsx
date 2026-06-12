@@ -628,13 +628,15 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
 function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,employees}){
   const [q,setQ] = useState('')
   const [filter,setFilter] = useState('all')
+  const [webFilter,setWebFilter] = useState('all')
   const [sort,setSort] = useState({k:'updated',dir:'desc'})
 
   const rows = useMemo(()=>{
     let r = visibleLeads.filter(l=>{
       const hit = (l.business_name+' '+(l.phone||'')).toLowerCase().includes(q.toLowerCase())
       const fok = filter==='all' || l.status===filter
-      return hit && fok
+      const wok = webFilter==='all' || (webFilter==='yes' ? l.website_exists : !l.website_exists)
+      return hit && fok && wok
     })
     const sgn = sort.dir==='asc'?1:-1
     r = [...r].sort((a,b)=>{
@@ -646,7 +648,7 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
       return av<bv?-sgn:av>bv?sgn:0
     })
     return r
-  },[visibleLeads,q,filter,sort])
+  },[visibleLeads,q,filter,webFilter,sort])
 
   const th = (k,label)=>(
     <th onClick={()=>setSort(s=>({k,dir:s.k===k&&s.dir==='asc'?'desc':'asc'}))}>
@@ -664,6 +666,11 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
       <select className="sel" value={filter} onChange={e=>setFilter(e.target.value)}>
         <option value="all">All statuses</option>
         {PIPE_ORDER.map(s=><option key={s} value={s}>{STATUS[s].label}</option>)}
+      </select>
+      <select className="sel" value={webFilter} onChange={e=>setWebFilter(e.target.value)}>
+        <option value="all">Website: All</option>
+        <option value="yes">Has website</option>
+        <option value="no">No website</option>
       </select>
     </div>
     {rows.length===0 ? <div className="empty">No leads match.</div> :
