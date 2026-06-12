@@ -671,8 +671,10 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
       <thead><tr>
         {th('business','Business')}
         <th>Phone</th>
+        <th>Website</th>
         {th('status','Status')}
-        {isOwner && <th>Assigned</th>}
+        {isOwner && <th>Setter</th>}
+        {isOwner && <th>Closer</th>}
         {th('followup','Next follow-up')}
       </tr></thead>
       <tbody>
@@ -680,7 +682,9 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
           <tr key={l.id} onClick={()=>setSelected(l)}>
             <td className="bn">{l.business_name}</td>
             <td className="muted num">{l.phone||'-'}</td>
+            <td className="muted">{l.website_exists?'Yes':'No'}</td>
             <td><Chip status={l.status}/></td>
+            {isOwner && <td className="muted">{nameOf(l.created_by)}</td>}
             {isOwner && <td className="muted">{nameOf(l.assigned_to)}</td>}
             <td className="muted num">{fmtDate(l.next_followup_date)}</td>
           </tr>
