@@ -683,7 +683,6 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
         {th('status','Status')}
         {isOwner && <th>Setter</th>}
         {isOwner && <th>Closer</th>}
-        {th('followup','Next follow-up')}
       </tr></thead>
       <tbody>
         {rows.map(l=>(
@@ -695,7 +694,6 @@ function Leads({visibleLeads,nameOf,setSelected,isOwner,repFilter,setRepFilter,e
             <td><Chip status={l.status}/></td>
             {isOwner && <td className="muted">{nameOf(l.created_by)}</td>}
             {isOwner && <td className="muted">{nameOf(l.assigned_to)}</td>}
-            <td className="muted num">{fmtDate(l.next_followup_date)}</td>
           </tr>
         ))}
       </tbody>
