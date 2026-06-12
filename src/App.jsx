@@ -276,6 +276,16 @@ const ACTION_ICON = {
 
 const money = n => '$' + Number(n||0).toLocaleString()
 const initials = s => (s||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()
+// Formats US 10-digit numbers as (XXX) XXX-XXXX while typing. Leaves
+// anything else (extensions, intl numbers, partial input) untouched.
+function formatPhone(v){
+  const digits = (v||'').replace(/\D/g,'')
+  if(digits.length===0) return ''
+  if(digits.length<=3) return '('+digits
+  if(digits.length<=6) return '('+digits.slice(0,3)+') '+digits.slice(3)
+  if(digits.length<=10) return '('+digits.slice(0,3)+') '+digits.slice(3,6)+'-'+digits.slice(6)
+  return v // longer than 10 digits, leave as typed (could be intl/ext)
+}
 const today = new Date().toISOString().slice(0,10)
 function relTime(iso){
   const diff = (Date.now() - new Date(iso).getTime())/1000
@@ -1168,7 +1178,7 @@ function LeadDrawer({lead,nameOf,patchLead,removeLead,isOwner,activity,onClose,e
           <div className="fld"><label>Status</label>
             <select value={f.status} onChange={e=>set('status',e.target.value)}>
               {PIPE_ORDER.map(s=><option key={s} value={s}>{STATUS[s].label}</option>)}</select></div>
-          <div className="fld"><label>Phone</label><input value={f.phone||''} onChange={e=>set('phone',e.target.value)}/></div>
+          <div className="fld"><label>Phone</label><input value={f.phone||''} onChange={e=>set('phone',formatPhone(e.target.value))}/></div>
           <div className="fld"><label>Email</label><input value={f.email||''} onChange={e=>set('email',e.target.value)}/></div>
           <div className="frow">
             <div className="fld"><label>Has website</label>
@@ -1250,7 +1260,7 @@ function BulkImport({onClose,onImport,employees}){
     try{
       const leads=parsed.map(r=>({
         business_name:r.business_name,
-        phone:r.phone||null,
+        phone:r.phone?formatPhone(r.phone):null,
         notes:r.notes||null,
         website_exists:['yes','y','true','1'].includes(r.website_exists),
         lead_source:'Bulk import',
@@ -1341,7 +1351,7 @@ function AddLead({onClose,onSave,myId,isOwner,employees}){
       <div className="db">
         <div className="fld"><label>Business name *</label><input value={f.business_name} onChange={e=>set('business_name',e.target.value)} placeholder="e.g. Crescent Auto Glass"/></div>
         <div className="frow">
-          <div className="fld"><label>Phone</label><input value={f.phone} onChange={e=>set('phone',e.target.value)}/></div>
+          <div className="fld"><label>Phone</label><input value={f.phone} onChange={e=>set('phone',formatPhone(e.target.value))}/></div>
           <div className="fld"><label>Email</label><input value={f.email} onChange={e=>set('email',e.target.value)}/></div>
         </div>
         <div className="frow">
