@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, UserCog,
   BarChart3, Activity, Search, Plus, Phone, LogOut, X, Trash2,
   ChevronRight, TrendingUp, Wallet, CheckCircle2, CircleDashed,
-  Filter, ArrowUpDown, Lock, Menu, DollarSign, Upload, FileText
+  Filter, ArrowUpDown, Lock, Menu, DollarSign, Upload, FileText, BookOpen, ChevronDown
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip,
@@ -81,7 +81,7 @@ const STYLES = `
 .btn-sm{padding:6px 11px;font-size:12.5px}
 
 /* cards */
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
 .card .lab{font-size:12.5px;color:var(--soft);font-weight:500;display:flex;
   align-items:center;gap:7px}
@@ -202,6 +202,20 @@ tbody tr:hover{background:#faf9f6}
 .sectitle{font-size:13px;font-weight:600;color:var(--soft);text-transform:uppercase;
   letter-spacing:.05em;margin:4px 2px 12px}
 .empty{padding:40px;text-align:center;color:var(--soft);font-size:14px}
+/* knowledge base */
+.kb-section{margin-bottom:16px}
+.kb-section-title{font-size:15px;font-weight:700;padding:14px 18px;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;margin-bottom:8px;color:var(--ink)}
+.faq{background:var(--surface);border:1px solid var(--line);border-radius:11px;margin-bottom:6px;overflow:hidden}
+.faq-q{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;
+  font-size:14px;font-weight:600;color:var(--ink);user-select:none;width:100%;text-align:left}
+.faq-q:hover{background:#faf9f6}
+.faq-q .faq-chev{margin-left:auto;color:var(--soft);transition:transform .2s;flex-shrink:0}
+.faq-q .faq-chev.open{transform:rotate(180deg)}
+.faq-a{padding:0 16px 14px;font-size:14px;line-height:1.7;color:var(--ink)}
+.faq-a p{margin-bottom:8px}
+.faq-a p:last-child{margin-bottom:0}
+
 .lockbar{display:flex;align-items:center;gap:9px;background:#fbf6ea;border:1px solid #efe3c4;
   color:#7a5b12;padding:10px 14px;border-radius:11px;font-size:13px;margin-bottom:18px}
 
@@ -399,6 +413,7 @@ export default function App(){
     reports:   ['Reports','Sales, client success and performance'],
     activity:  ['Activity', isOwner ? 'Everything happening across the team' : 'Your activity log'],
     scripts:   ['Cold Call Scripts', isOwner ? 'Add and manage scripts for the team' : 'Reference scripts for your calls'],
+    kb:        ['Knowledge Base', 'AEO and SEO answers for sales calls'],
     payroll:   ['Payroll','Commission breakdown by rep'],
   }
   const [title,sub] = NAV_TITLES[view]
@@ -420,6 +435,7 @@ export default function App(){
             <NavItem id="company" icon={Building2} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Overview</NavItem>
             <NavItem id="activity" icon={Activity} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Activity</NavItem>
             <NavItem id="scripts" icon={FileText} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Scripts</NavItem>
+            <NavItem id="kb" icon={BookOpen} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Knowledge Base</NavItem>
             <NavItem id="payroll" icon={DollarSign} view={view} set={v=>{setView(v);setMenuOpen(false)}}>Payroll</NavItem>
             {isOwner && <>
               <div className="nav-label">Admin</div>
@@ -452,6 +468,7 @@ export default function App(){
             {view==='company' && <Company {...{leads,clients,nameOf}}/>}
             {view==='activity' && <ActivityView {...{visibleActivity,nameOf}}/>}
             {view==='scripts' && <Scripts isOwner={isOwner}/>}
+            {view==='kb' && <KnowledgeBase/>}
             {view==='team' && isOwner && <Team {...{leads,clients,activity,employees,isOwner,onAddEmployee:addEmployee}}/>}
             {view==='reports' && isOwner && <Reports {...{leads,clients,activity,employees}}/>}
             {view==='payroll' && <Payroll {...{clients,employees,nameOf}}/>}
@@ -538,13 +555,11 @@ function Dashboard({isOwner,user,visibleLeads,clients,visibleActivity,nameOf,lea
 
   const cards = isOwner ? [
     ['Total Leads', m.total, Users, ''],
-    ['Active Leads', m.active, TrendingUp, 'in pipeline now'],
     ['Closed Clients', m.won, CheckCircle2, ''],
     ['Monthly Recurring', money(m.mrr), Wallet, 'MRR'],
     ['One-Time Revenue', money(m.one), Wallet, 'build fees'],
   ] : [
     ['Leads Assigned', m.total, Users, ''],
-    ['Active Leads', m.active, TrendingUp, 'working now'],
     ['Deals Closed', m.won, CheckCircle2, ''],
     ['Monthly Earnings', money(m.monthlyEarn)+'/mo', DollarSign, 'recurring commission'],
     ['One-Time Earnings', money(m.oneTimeEarn), Wallet, 'build commission'],
@@ -1024,6 +1039,87 @@ function Reports({leads,clients,activity,employees}){
         </div>
       </div>
     </div>
+  </>
+}
+
+// ---------- Knowledge Base ----------
+const KB_DATA = [
+  { section: 'What AEO Is and Why It Matters', items: [
+    { q: 'What is AEO?', a: 'AEO stands for AI Engine Optimization. It\'s the process of making your business visible and recommended by AI tools like ChatGPT, Google\'s AI Overviews, Perplexity, Siri, and Alexa. When someone asks an AI "what\'s the best auto body shop near me," AEO is what determines whether your business gets mentioned or not.' },
+    { q: 'How is AEO different from SEO?', a: 'SEO optimizes your website to rank on a list of Google search results. AEO optimizes your business to be directly recommended in AI-generated answers. With SEO, you\'re fighting for position on a page of ten links. With AEO, the AI picks one or two businesses to recommend by name. If you\'re not optimized for that, you don\'t exist in that conversation. SEO gets you on the list. AEO gets you the recommendation.' },
+    { q: 'Why should I care about AI search? My customers just Google things.', a: 'That\'s changing fast. Over 100 million people already use ChatGPT weekly, and Google has added AI Overviews to the top of most search results. When someone searches "best collision repair in Las Vegas," Google now shows an AI-written answer above all the regular results. If your business isn\'t in that AI answer, the customer may never scroll down to find you. People are also asking Siri, Alexa, and ChatGPT directly for recommendations, skipping Google entirely. This isn\'t five years away. It\'s happening right now.' },
+    { q: 'Is this just a trend or is AI search actually replacing traditional search?', a: 'The data is clear. Google\'s own AI Overviews now appear on the majority of search queries. ChatGPT has over 400 million monthly users. Gartner projected that traditional search traffic would drop 25% by 2026 as AI alternatives take share. Apple is integrating ChatGPT directly into Siri. Samsung tested replacing Google with AI search as the default on their phones. Every major tech company is betting their future on AI-powered search. This isn\'t a trend, it\'s a platform shift on the scale of mobile replacing desktop.' },
+    { q: 'I already show up on Google. Why do I need this?', a: 'Showing up on Google\'s traditional results is great, but it\'s not enough anymore. Google\'s AI Overviews sit above your listing and often answer the user\'s question without them clicking anything. If the AI overview recommends your competitor by name and doesn\'t mention you, your Google ranking doesn\'t matter because the customer already has their answer. AEO makes sure you\'re the business the AI recommends, not just one of ten links below it.' },
+  ]},
+  { section: 'How AEO Actually Works', items: [
+    { q: 'What do you actually do to optimize my business for AI?', a: 'We work on the signals that AI models use to decide which businesses to recommend. That includes structured data markup on your website so AI can read and understand your services, building your presence across trusted data sources, optimizing your Google Business Profile for AI consumption, creating content that directly answers the questions AI pulls from, and implementing technical standards like llms.txt that tell AI crawlers exactly what your business does. It\'s a combination of technical optimization and strategic content.' },
+    { q: 'What is structured data?', a: 'Structured data is code on your website that tells search engines and AI exactly what your business is, what services you offer, where you\'re located, your hours, your reviews, and more. Think of it like a label on a package. A human can look at a package and figure out what\'s inside, but a barcode lets a computer read it instantly. Structured data is the barcode for your business. Without it, AI has to guess what you do. With it, AI knows precisely what you offer.' },
+    { q: 'What is llms.txt?', a: 'It\'s a new technical standard, similar to robots.txt, that gives AI language models a clean, structured summary of your business. When an AI like ChatGPT or Perplexity crawls the web looking for information about local businesses, llms.txt gives it exactly what it needs in a format it can process efficiently. Very few businesses have this implemented right now, which is a huge advantage for our clients.' },
+    { q: 'How does AI decide which businesses to recommend?', a: 'AI models pull from multiple sources: your website content, Google Business Profile, review sites like Yelp and BBB, industry directories, social media, news mentions, and structured data. The AI is looking for consistency, authority, and relevance. If your business has strong reviews, clear service descriptions, consistent information across platforms, and proper technical markup, the AI will trust you as a recommendation. If your online presence is thin, inconsistent, or poorly structured, the AI will recommend someone else.' },
+    { q: 'Do you guarantee I\'ll show up in ChatGPT or Google AI?', a: 'We don\'t guarantee specific placements because AI results are dynamic and change based on how each user phrases their question. What we do guarantee is that we optimize every signal that AI models use to make recommendations. Our clients consistently show up in AI search results because we\'re building exactly what these systems are looking for. You can test it yourself: ask ChatGPT for recommendations in your industry and area, and our clients are the ones showing up.' },
+    { q: 'How long does it take to see results?', a: 'Some changes take effect quickly, especially structured data and Google Business Profile optimization, which can influence AI results within weeks. Building broader authority and content signals is an ongoing process. Most clients start seeing meaningful visibility in AI search within 30 to 60 days, with results strengthening over time as we continue optimization.' },
+    { q: 'Can I see proof that this works?', a: 'Absolutely. We can pull up ChatGPT, Perplexity, or Google right now and search for businesses in your industry and area. You\'ll see which businesses get recommended and which don\'t. We can also show you our existing clients who are already showing up in these results. The proof is live and testable in real time, it\'s not a report we hand you in three months.' },
+  ]},
+  { section: 'SEO Questions', items: [
+    { q: 'Do I even need a website? I get all my business from word of mouth.', a: 'Word of mouth is great, but here\'s the thing: when someone gets a referral, the first thing they do is Google you. If they can\'t find a website, they start second-guessing the referral. A website isn\'t just for getting new customers. It validates your business for the ones you\'re already getting. And beyond that, there\'s an entire market of people searching for your services who have no idea you exist. A website puts you in front of them.' },
+    { q: 'What\'s wrong with my current website?', a: 'If your website was built more than a few years ago, it\'s almost certainly not optimized for how search works today. It probably isn\'t mobile-friendly, loads slowly, has no structured data, and isn\'t set up to be read by AI. A website that just "exists" isn\'t doing anything for you. It needs to actively work as a sales tool: showing up in search, loading fast, and converting visitors into calls.' },
+    { q: 'What\'s the difference between a website and SEO?', a: 'A website is your digital storefront. SEO is what makes that storefront visible. Having a website without SEO is like opening a store on a street with no signs pointing to it. SEO handles the technical and content work that gets your site ranked in search results so people actually find you.' },
+    { q: 'How is your website different from Wix or Squarespace?', a: 'Wix and Squarespace are template builders. They give you a generic site that looks like everyone else\'s and isn\'t optimized for search performance. Our sites are custom-built for speed, search visibility, and conversion. We build in the technical SEO and structured data from day one, and we handle everything for you. You don\'t have to learn a website builder, update plugins, or figure out hosting. We do all of it.' },
+    { q: 'I paid someone to build me a website before and nothing happened.', a: 'That\'s because most web designers build a site and disappear. They don\'t do the ongoing optimization that actually drives traffic. A website alone doesn\'t do anything. It needs to be optimized, maintained, and updated to keep performing. That\'s what our monthly service covers. We don\'t just build and bail.' },
+  ]},
+  { section: 'Competition and Market', items: [
+    { q: 'My competitor already has a website. Am I too late?', a: 'Having a website is just step one. Most of your competitors\' sites aren\'t optimized for AI search. That\'s the new frontier. Even if they rank on Google today, if they\'re not optimized for AI recommendations, you can leapfrog them by getting in now. The businesses that move first on AEO are the ones that will dominate their local market for years.' },
+    { q: 'Is anyone else offering this?', a: 'Very few agencies are offering AEO as a dedicated service. Most agencies are still focused on traditional SEO and haven\'t adapted to the AI shift. We built AEO into our core offering specifically because we saw this wave coming. Being one of the first to market gives our clients a window of opportunity that won\'t last forever. Once everyone catches up, the advantage of being early disappears.' },
+    { q: 'What if my competitors start doing AEO too?', a: 'They will eventually. That\'s exactly why moving now matters. The businesses that establish their AI presence first build authority that\'s hard to displace. It\'s like SEO ten years ago. The companies that invested early dominated search for years. The same thing is happening with AI search right now, and the window to get ahead is open but it won\'t stay open.' },
+    { q: 'I\'m in a small market. Does this even matter for me?', a: 'It matters even more. In a small market, there are fewer businesses competing for AI recommendations. That means less effort to become the top recommended business. In a big city, you\'re competing with dozens of shops. In a smaller market, optimizing for AI search can put you at the top with relatively little competition. You\'re in the best possible position to dominate early.' },
+  ]},
+  { section: 'Pricing and Service', items: [
+    { q: 'How much does it cost?', a: 'Our Essentials package is a one-time $500 build for a custom website with $50 a month for hosting and maintenance. Our AEO service is $1,500 a month, which includes full AI search optimization, ongoing content strategy, structured data management, and continuous monitoring of your AI search visibility.' },
+    { q: 'That\'s expensive. I can get a website for free.', a: 'You can get a template for free. You can\'t get a website that actually generates business for free. A free Wix site with no SEO, no structured data, and no optimization is like a billboard in your basement. Nobody sees it. Our service is built to make your phone ring. The question isn\'t what it costs, it\'s what it costs you to stay invisible.' },
+    { q: 'What\'s the ROI on this?', a: 'Think about what one new customer is worth to your business. If your average job is $1,000 to $5,000, you only need one or two new customers from your online presence to cover the entire cost of the service. Most businesses get far more than that once they\'re properly visible online. And unlike paid ads where the traffic stops the second you stop paying, the optimization we build compounds over time.' },
+    { q: 'Is there a contract?', a: 'AEO is a monthly retainer. The optimization is ongoing because AI search results are dynamic: new competitors enter the market, AI models update their algorithms, and your content needs to stay current. It\'s not a one-time fix, it\'s an ongoing competitive advantage. That said, we don\'t lock you into long-term contracts. The results speak for themselves.' },
+    { q: 'Why wouldn\'t I just do this myself?', a: 'You could learn structured data markup, JSON-LD schema, llms.txt implementation, Google Business Profile optimization for AI, content strategy for large language models, and keep up with the weekly changes in how AI search works. Or you could focus on running your business and let us handle it. This is all we do, all day, and we\'re ahead of the curve because we\'ve been building for this shift before most agencies even knew it was coming.' },
+  ]},
+  { section: 'Handling Skepticism', items: [
+    { q: 'This sounds like a scam. How do I know this is real?', a: 'Pull out your phone right now and ask ChatGPT to recommend a business in your industry in your city. You\'ll see that AI is already making recommendations, and the businesses showing up aren\'t there by accident. They\'re there because their online presence is structured for AI to find them. This isn\'t theoretical. It\'s live, testable, and happening millions of times a day. We can run that search together right now.' },
+    { q: 'I\'ve never heard of AEO before.', a: 'Most people haven\'t, and that\'s the opportunity. SEO was new once too. The businesses that adopted SEO early dominated search for a decade. AEO is at that same inflection point right now. You\'re hearing about it now because you\'re talking to one of the first agencies that built a service around it. A year from now, everyone will be talking about it. The question is whether you want to be established by then or scrambling to catch up.' },
+    { q: 'AI is just a fad. It\'ll blow over.', a: 'Every major technology company in the world, Google, Apple, Microsoft, Meta, Amazon, is investing billions into AI. Google has rebuilt their entire search experience around AI. Apple integrated ChatGPT into every iPhone. This isn\'t a startup experiment. It\'s the biggest technology shift since the smartphone. Businesses that said the internet was a fad in 2000 and that mobile didn\'t matter in 2010 paid the price for being wrong. This is that same moment.' },
+    { q: 'What if AI search changes and everything you did stops working?', a: 'The fundamentals of what makes a business AI-visible don\'t change: clear information, strong reviews, consistent data, authoritative content, and proper technical structure. Those signals matter to every AI system, regardless of the specific platform. Our ongoing service includes adapting to algorithm updates and platform changes. That\'s the whole point of the retainer: we stay on top of it so you don\'t have to.' },
+    { q: 'Can\'t I just pay for Google Ads instead?', a: 'You can, and ads work. But ads stop working the instant you stop paying. AEO builds lasting visibility. Think of ads as renting attention and AEO as owning it. Also, AI search results don\'t have a paid placement option right now. You can\'t buy your way into a ChatGPT recommendation. The only way in is through optimization, and we do that.' },
+  ]},
+]
+
+function FAQItem({q,a}){
+  const [open,setOpen]=useState(false)
+  return <div className="faq">
+    <button className="faq-q" onClick={()=>setOpen(!open)}>
+      {q}<ChevronDown size={16} className={'faq-chev'+(open?' open':'')}/>
+    </button>
+    {open && <div className="faq-a"><p>{a}</p></div>}
+  </div>
+}
+
+function KnowledgeBase(){
+  const [search,setSearch]=useState('')
+  const filtered = search.trim() ? KB_DATA.map(s=>({
+    ...s, items:s.items.filter(i=>
+      i.q.toLowerCase().includes(search.toLowerCase()) ||
+      i.a.toLowerCase().includes(search.toLowerCase())
+    )
+  })).filter(s=>s.items.length>0) : KB_DATA
+
+  return <>
+    <div className="srch" style={{marginBottom:18,maxWidth:500}}>
+      <Search size={16} className="muted"/>
+      <input placeholder="Search questions and answers..." value={search} onChange={e=>setSearch(e.target.value)}/>
+    </div>
+    {filtered.length===0 && <div className="empty">No questions match your search.</div>}
+    {filtered.map((s,i)=>(
+      <div className="kb-section" key={i}>
+        <div className="kb-section-title">{s.section}</div>
+        {s.items.map((item,j)=><FAQItem key={j} q={item.q} a={item.a}/>)}
+      </div>
+    ))}
   </>
 }
 
